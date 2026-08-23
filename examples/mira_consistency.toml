@@ -1,0 +1,29 @@
+[experiment]
+name = "mira-consistency-v1"
+base_prompt = "highly detailed cinematic illustration"
+negative_prompt = "lowres, blurry, duplicated face, extra limbs"
+base_seed = 4242
+
+[character]
+name = "Mira Vale"
+identity = [
+  "short silver bob haircut",
+  "amber eyes",
+  "thin scar over left eyebrow",
+]
+
+[consistency]
+always = [
+  "same adult woman",
+  "same face shape",
+  "same hairstyle",
+  "same eyebrow scar",
+]
+
+[variants]
+shots = ["portrait close-up", "full body"]
+expressions = ["calm confidence", "determined focus"]
+outfits = ["red trench coat"]
+backgrounds = ["neon rainy alley", "sunlit train platform"]
+lighting = ["soft rim light"]
+actions = ["standing still"]

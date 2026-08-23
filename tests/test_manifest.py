@@ -1,0 +1,73 @@
+import json
+import tempfile
+import unittest
+from pathlib import Path
+
+from character_consistency_lab.manifest import generate_manifest, load_spec, manifest_to_json
+
+
+SPEC = {
+    "experiment": {
+        "name": "hero-v1",
+        "base_prompt": "stylized illustration",
+        "negative_prompt": "blurry",
+        "base_seed": 100,
+    },
+    "character": {
+        "name": "Ari",
+        "identity": ["green eyes", "freckles"],
+    },
+    "consistency": {
+        "always": ["same character", "same face"],
+    },
+    "variants": {
+        "shots": ["portrait", "full body"],
+        "expressions": ["neutral", "smiling"],
+        "actions": ["standing"],
+    },
+}
+
+
+class ManifestTests(unittest.TestCase):
+    def test_generate_manifest_expands_variant_matrix(self) -> None:
+        manifest = generate_manifest(SPEC)
+
+        self.assertEqual(manifest["sample_count"], 4)
+        self.assertEqual(len(manifest["samples"]), 4)
+        self.assertIn("character: Ari", manifest["samples"][0]["prompt"])
+        self.assertIn("same character", manifest["samples"][0]["prompt"])
+
+    def test_seed_is_stable_for_same_spec(self) -> None:
+        first = generate_manifest(SPEC)
+        second = generate_manifest(SPEC)
+
+        self.assertEqual(first["samples"][0]["seed"], second["samples"][0]["seed"])
+        self.assertEqual(first["samples"][0]["sample_id"], second["samples"][0]["sample_id"])
+
+    def test_load_spec_from_toml(self) -> None:
+        content = """
+[experiment]
+name = "hero-v1"
+base_prompt = "stylized illustration"
+
+[variants]
+shots = ["portrait"]
+""".strip()
+        with tempfile.TemporaryDirectory() as tmpdir:
+            path = Path(tmpdir) / "spec.toml"
+            path.write_text(content, encoding="utf-8")
+            loaded = load_spec(path)
+
+        self.assertEqual(loaded["experiment"]["name"], "hero-v1")
+        self.assertEqual(loaded["variants"]["shots"], ["portrait"])
+
+    def test_manifest_to_json_is_valid_json(self) -> None:
+        manifest = generate_manifest(SPEC)
+        payload = manifest_to_json(manifest)
+
+        parsed = json.loads(payload)
+        self.assertEqual(parsed["sample_count"], 4)
+
+
+if __name__ == "__main__":
+    unittest.main()
