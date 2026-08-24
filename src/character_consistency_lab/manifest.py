@@ -16,6 +16,7 @@ class ManifestSample:
     prompt: str
     negative_prompt: str
     tags: dict[str, str]
+    render_settings: dict[str, Any]
 
     def as_dict(self) -> dict[str, Any]:
         return {
@@ -24,6 +25,7 @@ class ManifestSample:
             "prompt": self.prompt,
             "negative_prompt": self.negative_prompt,
             "tags": self.tags,
+            "render_settings": self.render_settings,
         }
 
 
@@ -34,6 +36,22 @@ DIMENSION_KEYS = {
     "backgrounds": "background",
     "outfits": "outfit",
     "lighting": "lighting",
+}
+
+RENDER_SWEEP_KEYS = {
+    "guidance_scales": "guidance_scale",
+    "num_inference_steps": "num_inference_steps",
+    "widths": "width",
+    "heights": "height",
+    "lora_scales": "lora_scale",
+}
+
+RENDER_SLUG_KEYS = {
+    "guidance_scale": "gs",
+    "num_inference_steps": "steps",
+    "width": "w",
+    "height": "h",
+    "lora_scale": "lora",
 }
 
 
@@ -79,6 +97,49 @@ def _compose_prompt(
     return "; ".join(parts)
 
 
+def _slugify(value: Any) -> str:
+    return (
+        str(value)
+        .strip()
+        .lower()
+        .replace(" ", "-")
+        .replace(",", "")
+        .replace(".", "p")
+    )
+
+
+def _coerce_render_value(key: str, value: Any) -> Any:
+    if key in {"width", "height", "num_inference_steps"}:
+        return int(value)
+    if key in {"guidance_scale", "lora_scale"}:
+        return float(value)
+    return value
+
+
+def _build_render_dimensions(spec: dict[str, Any]) -> tuple[dict[str, Any], list[tuple[str, list[Any]]]]:
+    render = spec.get("render", {})
+    sweeps = spec.get("sweeps", {})
+
+    render_defaults = {
+        key: _coerce_render_value(key, value)
+        for key, value in render.items()
+        if key in RENDER_SLUG_KEYS and value is not None
+    }
+
+    render_dimensions: list[tuple[str, list[Any]]] = []
+    for sweep_key, render_key in RENDER_SWEEP_KEYS.items():
+        sweep_values = sweeps.get(sweep_key)
+        if sweep_values is not None:
+            values = [_coerce_render_value(render_key, item) for item in sweep_values]
+        elif render_key in render_defaults:
+            values = [render_defaults[render_key]]
+        else:
+            values = [None]
+        render_dimensions.append((render_key, values))
+
+    return render_defaults, render_dimensions
+
+
 def generate_manifest(spec: dict[str, Any]) -> dict[str, Any]:
     experiment = spec.get("experiment", {})
     character = spec.get("character", {})
@@ -93,6 +154,7 @@ def generate_manifest(spec: dict[str, Any]) -> dict[str, Any]:
     character_name = str(character.get("name", "")).strip()
     identity_traits = _normalize_items(character.get("identity"))
     consistency_rules = _normalize_items(consistency.get("always"))
+    render_defaults, render_dimensions = _build_render_dimensions(spec)
 
     dimensions: list[tuple[str, list[str]]] = []
     for plural_key, singular_key in DIMENSION_KEYS.items():
@@ -100,15 +162,28 @@ def generate_manifest(spec: dict[str, Any]) -> dict[str, Any]:
         dimensions.append((singular_key, values))
 
     samples: list[ManifestSample] = []
-    for combination in product(*(values for _, values in dimensions)):
+    all_dimensions = dimensions + render_dimensions
+    for combination in product(*(values for _, values in all_dimensions)):
+        scene_values = combination[: len(dimensions)]
+        render_values = combination[len(dimensions) :]
+
         tags = {
             key: value
-            for (key, _), value in zip(dimensions, combination, strict=True)
+            for (key, _), value in zip(dimensions, scene_values, strict=True)
             if value
         }
-        tag_suffix = "-".join(
-            value.lower().replace(" ", "-").replace(",", "") for value in tags.values()
-        ) or "base"
+        render_settings = {
+            key: value
+            for (key, _), value in zip(render_dimensions, render_values, strict=True)
+            if value is not None
+        }
+
+        sample_slug_parts = [_slugify(value) for value in tags.values()]
+        sample_slug_parts.extend(
+            f"{RENDER_SLUG_KEYS[key]}-{_slugify(value)}"
+            for key, value in render_settings.items()
+        )
+        tag_suffix = "-".join(sample_slug_parts) or "base"
         sample_id = f"{experiment_name}-{len(samples) + 1:03d}-{tag_suffix}"
         samples.append(
             ManifestSample(
@@ -123,6 +198,7 @@ def generate_manifest(spec: dict[str, Any]) -> dict[str, Any]:
                 ),
                 negative_prompt=negative_prompt,
                 tags=tags,
+                render_settings=render_settings,
             )
         )
 
@@ -140,6 +216,7 @@ def generate_manifest(spec: dict[str, Any]) -> dict[str, Any]:
         "consistency": {
             "always": consistency_rules,
         },
+        "render": render_defaults,
         "sample_count": len(samples),
         "samples": [sample.as_dict() for sample in samples],
     }

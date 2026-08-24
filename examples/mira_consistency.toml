@@ -27,3 +27,12 @@ outfits = ["red trench coat"]
 backgrounds = ["neon rainy alley", "sunlit train platform"]
 lighting = ["soft rim light"]
 actions = ["standing still"]
+
+[render]
+width = 768
+height = 1024
+num_inference_steps = 32
+
+[sweeps]
+guidance_scales = [6.0, 7.5]
+lora_scales = [0.65, 0.85]

@@ -44,6 +44,48 @@ class ManifestTests(unittest.TestCase):
         self.assertEqual(first["samples"][0]["seed"], second["samples"][0]["seed"])
         self.assertEqual(first["samples"][0]["sample_id"], second["samples"][0]["sample_id"])
 
+    def test_render_sweeps_expand_samples_and_emit_render_settings(self) -> None:
+        spec = {
+            **SPEC,
+            "render": {
+                "width": 768,
+                "height": 1024,
+                "guidance_scale": 6.5,
+            },
+            "sweeps": {
+                "guidance_scales": [6.5, 8.0],
+                "num_inference_steps": [28, 36],
+                "lora_scales": [0.7],
+            },
+        }
+
+        manifest = generate_manifest(spec)
+
+        self.assertEqual(manifest["sample_count"], 16)
+        self.assertEqual(manifest["render"]["width"], 768)
+        self.assertEqual(manifest["samples"][0]["render_settings"]["height"], 1024)
+        self.assertIn(manifest["samples"][0]["render_settings"]["guidance_scale"], {6.5, 8.0})
+        self.assertIn("gs-6p5", manifest["samples"][0]["sample_id"])
+        self.assertIn("steps-28", manifest["samples"][0]["sample_id"])
+
+    def test_render_defaults_are_copied_without_sweeps(self) -> None:
+        spec = {
+            **SPEC,
+            "render": {
+                "width": 640,
+                "height": 960,
+                "num_inference_steps": 30,
+            },
+        }
+
+        manifest = generate_manifest(spec)
+
+        self.assertEqual(manifest["sample_count"], 4)
+        self.assertEqual(
+            manifest["samples"][0]["render_settings"],
+            {"width": 640, "height": 960, "num_inference_steps": 30},
+        )
+
     def test_load_spec_from_toml(self) -> None:
         content = """
 [experiment]
