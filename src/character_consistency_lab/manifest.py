@@ -39,6 +39,8 @@ DIMENSION_KEYS = {
 }
 
 RENDER_SWEEP_KEYS = {
+    "model_ids": "model_id",
+    "lora_adapters": "lora_adapter",
     "guidance_scales": "guidance_scale",
     "num_inference_steps": "num_inference_steps",
     "widths": "width",
@@ -47,6 +49,8 @@ RENDER_SWEEP_KEYS = {
 }
 
 RENDER_SLUG_KEYS = {
+    "model_id": "model",
+    "lora_adapter": "adapter",
     "guidance_scale": "gs",
     "num_inference_steps": "steps",
     "width": "w",
@@ -113,6 +117,8 @@ def _coerce_render_value(key: str, value: Any) -> Any:
         return int(value)
     if key in {"guidance_scale", "lora_scale"}:
         return float(value)
+    if key in {"model_id", "lora_adapter"}:
+        return str(value).strip()
     return value
 
 

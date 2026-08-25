@@ -1,5 +1,11 @@
 # Daily Work Log
 
+## 2026-08-25
+- Extended `ccl-manifest` to support checkpoint-level render sweeps via `model_ids` and `lora_adapters`, so character-consistency runs can compare base models and adapter revisions in one manifest.
+- Propagated `model_id` and `lora_adapter` into per-sample `render_settings` and sample IDs for downstream Diffusers runners and traceable experiment outputs.
+- Updated the example spec and README to document model/adaptor sweeps alongside existing prompt and hyperparameter grids.
+- Verified with `PYTHONPATH=src ./venv/bin/python -m unittest discover -s tests` and `./venv/bin/ccl-manifest build-manifest --spec examples/mira_consistency.toml --output out/mira_consistency.json`.
+
 ## 2026-08-24
 - Extended `ccl-manifest` to support render-parameter sweeps for guidance scale, LoRA strength, inference steps, and canvas size.
 - Emitted per-sample `render_settings` metadata so downstream Diffusers runners can execute identity experiments without re-parsing the TOML spec.

@@ -48,11 +48,18 @@ class ManifestTests(unittest.TestCase):
         spec = {
             **SPEC,
             "render": {
+                "model_id": "stabilityai/stable-diffusion-xl-base-1.0",
+                "lora_adapter": "loras/ari_v1.safetensors",
                 "width": 768,
                 "height": 1024,
                 "guidance_scale": 6.5,
             },
             "sweeps": {
+                "model_ids": [
+                    "stabilityai/stable-diffusion-xl-base-1.0",
+                    "RunDiffusion/Juggernaut-XL-v9",
+                ],
+                "lora_adapters": ["loras/ari_v1.safetensors"],
                 "guidance_scales": [6.5, 8.0],
                 "num_inference_steps": [28, 36],
                 "lora_scales": [0.7],
@@ -61,17 +68,27 @@ class ManifestTests(unittest.TestCase):
 
         manifest = generate_manifest(spec)
 
-        self.assertEqual(manifest["sample_count"], 16)
-        self.assertEqual(manifest["render"]["width"], 768)
+        self.assertEqual(manifest["sample_count"], 32)
+        self.assertEqual(
+            manifest["render"]["model_id"],
+            "stabilityai/stable-diffusion-xl-base-1.0",
+        )
+        self.assertEqual(
+            manifest["samples"][0]["render_settings"]["lora_adapter"],
+            "loras/ari_v1.safetensors",
+        )
         self.assertEqual(manifest["samples"][0]["render_settings"]["height"], 1024)
         self.assertIn(manifest["samples"][0]["render_settings"]["guidance_scale"], {6.5, 8.0})
-        self.assertIn("gs-6p5", manifest["samples"][0]["sample_id"])
+        self.assertIn("model-stabilityai/stable-diffusion-xl-base-1p0", manifest["samples"][0]["sample_id"])
+        self.assertIn("adapter-loras/ari_v1psafetensors", manifest["samples"][0]["sample_id"])
         self.assertIn("steps-28", manifest["samples"][0]["sample_id"])
 
     def test_render_defaults_are_copied_without_sweeps(self) -> None:
         spec = {
             **SPEC,
             "render": {
+                "model_id": "stabilityai/stable-diffusion-xl-base-1.0",
+                "lora_adapter": "loras/ari_v1.safetensors",
                 "width": 640,
                 "height": 960,
                 "num_inference_steps": 30,
@@ -83,7 +100,13 @@ class ManifestTests(unittest.TestCase):
         self.assertEqual(manifest["sample_count"], 4)
         self.assertEqual(
             manifest["samples"][0]["render_settings"],
-            {"width": 640, "height": 960, "num_inference_steps": 30},
+            {
+                "model_id": "stabilityai/stable-diffusion-xl-base-1.0",
+                "lora_adapter": "loras/ari_v1.safetensors",
+                "width": 640,
+                "height": 960,
+                "num_inference_steps": 30,
+            },
         )
 
     def test_load_spec_from_toml(self) -> None:

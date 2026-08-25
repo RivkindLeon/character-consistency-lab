@@ -7,7 +7,7 @@ Utilities and experiments for preserving character identity consistency across A
 - `ccl-manifest`: expands a TOML experiment spec into a reproducible JSON prompt manifest
 - deterministic seed derivation per sample for repeatable runs
 - prompt-locked scene variation grids for character consistency sweeps
-- render-parameter sweeps for guidance scale, LoRA strength, steps, and canvas size
+- render-parameter sweeps for model backbones, LoRA adapters, guidance scale, LoRA strength, steps, and canvas size
 
 ## Why this helps
 
@@ -16,7 +16,7 @@ Character-consistency work usually needs two things early:
 1. a stable identity description that stays locked across generations
 2. a controlled variation grid for pose, expression, lighting, and background
 
-In practice, you also need to test generation settings that can preserve or destroy identity. This repo now includes a small generator that turns both prompt variation and render sweeps into a concrete manifest you can feed into Diffusers or other experiment runners.
+In practice, you also need to test generation settings that can preserve or destroy identity. That includes not only prompt phrasing and hyperparameters, but also which base checkpoint and LoRA adapter you use. This repo now includes a small generator that turns both prompt variation and render sweeps into a concrete manifest you can feed into Diffusers or other experiment runners.
 
 ## Quick start
 
@@ -62,16 +62,23 @@ outfits = ["red trench coat"]
 lighting = ["soft rim light"]
 
 [render]
+model_id = "stabilityai/stable-diffusion-xl-base-1.0"
+lora_adapter = "loras/mira_v1.safetensors"
 width = 768
 height = 1024
 num_inference_steps = 32
 
 [sweeps]
+model_ids = [
+  "stabilityai/stable-diffusion-xl-base-1.0",
+  "RunDiffusion/Juggernaut-XL-v9",
+]
+lora_adapters = ["loras/mira_v1.safetensors", "loras/mira_v2.safetensors"]
 guidance_scales = [6.0, 7.5]
 lora_scales = [0.65, 0.85]
 ```
 
-The generator creates the Cartesian product of the provided prompt variants and render sweeps, while keeping identity + consistency locks in every prompt.
+The generator creates the Cartesian product of the provided prompt variants and render sweeps, while keeping identity + consistency locks in every prompt. Each sample carries `render_settings` entries such as `model_id`, `lora_adapter`, `guidance_scale`, and `lora_scale`, so a downstream runner can compare consistency across checkpoints and adapter versions without re-parsing the TOML.
 
 ## Run tests
 
