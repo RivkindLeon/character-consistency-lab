@@ -12,6 +12,7 @@ from typing import Any
 @dataclass(frozen=True)
 class ManifestSample:
     sample_id: str
+    comparison_group_id: str
     seed: int
     prompt: str
     negative_prompt: str
@@ -21,6 +22,7 @@ class ManifestSample:
     def as_dict(self) -> dict[str, Any]:
         return {
             "sample_id": self.sample_id,
+            "comparison_group_id": self.comparison_group_id,
             "seed": self.seed,
             "prompt": self.prompt,
             "negative_prompt": self.negative_prompt,
@@ -146,6 +148,11 @@ def _build_render_dimensions(spec: dict[str, Any]) -> tuple[dict[str, Any], list
     return render_defaults, render_dimensions
 
 
+def _build_comparison_group_id(experiment_name: str, tags: dict[str, str]) -> str:
+    tag_suffix = "-".join(_slugify(value) for value in tags.values()) or "base"
+    return f"{experiment_name}-group-{tag_suffix}"
+
+
 def generate_manifest(spec: dict[str, Any]) -> dict[str, Any]:
     experiment = spec.get("experiment", {})
     character = spec.get("character", {})
@@ -168,6 +175,7 @@ def generate_manifest(spec: dict[str, Any]) -> dict[str, Any]:
         dimensions.append((singular_key, values))
 
     samples: list[ManifestSample] = []
+    comparison_groups: dict[str, dict[str, Any]] = {}
     all_dimensions = dimensions + render_dimensions
     for combination in product(*(values for _, values in all_dimensions)):
         scene_values = combination[: len(dimensions)]
@@ -184,6 +192,7 @@ def generate_manifest(spec: dict[str, Any]) -> dict[str, Any]:
             if value is not None
         }
 
+        comparison_group_id = _build_comparison_group_id(experiment_name, tags)
         sample_slug_parts = [_slugify(value) for value in tags.values()]
         sample_slug_parts.extend(
             f"{RENDER_SLUG_KEYS[key]}-{_slugify(value)}"
@@ -191,22 +200,33 @@ def generate_manifest(spec: dict[str, Any]) -> dict[str, Any]:
         )
         tag_suffix = "-".join(sample_slug_parts) or "base"
         sample_id = f"{experiment_name}-{len(samples) + 1:03d}-{tag_suffix}"
-        samples.append(
-            ManifestSample(
-                sample_id=sample_id,
-                seed=_derive_seed(base_seed, experiment_name, sample_id),
-                prompt=_compose_prompt(
-                    base_prompt=base_prompt,
-                    character_name=character_name,
-                    identity_traits=identity_traits,
-                    consistency_rules=consistency_rules,
-                    tags=tags,
-                ),
-                negative_prompt=negative_prompt,
+        sample = ManifestSample(
+            sample_id=sample_id,
+            comparison_group_id=comparison_group_id,
+            seed=_derive_seed(base_seed, experiment_name, sample_id),
+            prompt=_compose_prompt(
+                base_prompt=base_prompt,
+                character_name=character_name,
+                identity_traits=identity_traits,
+                consistency_rules=consistency_rules,
                 tags=tags,
-                render_settings=render_settings,
-            )
+            ),
+            negative_prompt=negative_prompt,
+            tags=tags,
+            render_settings=render_settings,
         )
+        samples.append(sample)
+
+        group = comparison_groups.setdefault(
+            comparison_group_id,
+            {
+                "comparison_group_id": comparison_group_id,
+                "prompt": sample.prompt,
+                "tags": tags,
+                "sample_ids": [],
+            },
+        )
+        group["sample_ids"].append(sample_id)
 
     return {
         "experiment": {
@@ -223,6 +243,7 @@ def generate_manifest(spec: dict[str, Any]) -> dict[str, Any]:
             "always": consistency_rules,
         },
         "render": render_defaults,
+        "comparison_groups": list(comparison_groups.values()),
         "sample_count": len(samples),
         "samples": [sample.as_dict() for sample in samples],
     }

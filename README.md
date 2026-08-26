@@ -31,6 +31,7 @@ python -m venv venv
 Example output fields:
 
 - `sample_id`
+- `comparison_group_id`
 - `seed`
 - `prompt`
 - `negative_prompt`
@@ -79,6 +80,8 @@ lora_scales = [0.65, 0.85]
 ```
 
 The generator creates the Cartesian product of the provided prompt variants and render sweeps, while keeping identity + consistency locks in every prompt. Each sample carries `render_settings` entries such as `model_id`, `lora_adapter`, `guidance_scale`, and `lora_scale`, so a downstream runner can compare consistency across checkpoints and adapter versions without re-parsing the TOML.
+
+It also emits a `comparison_group_id` per sample plus a top-level `comparison_groups` list. A comparison group represents one prompt-locked scene (same shot/expression/action/background/outfit/lighting) across multiple render settings, which makes it easy to score identity preservation for the same scene across models, LoRAs, or hyperparameters.
 
 ## Run tests
 

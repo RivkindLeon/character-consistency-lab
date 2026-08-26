@@ -34,8 +34,13 @@ class ManifestTests(unittest.TestCase):
 
         self.assertEqual(manifest["sample_count"], 4)
         self.assertEqual(len(manifest["samples"]), 4)
+        self.assertEqual(len(manifest["comparison_groups"]), 4)
         self.assertIn("character: Ari", manifest["samples"][0]["prompt"])
         self.assertIn("same character", manifest["samples"][0]["prompt"])
+        self.assertEqual(
+            manifest["samples"][0]["comparison_group_id"],
+            manifest["comparison_groups"][0]["comparison_group_id"],
+        )
 
     def test_seed_is_stable_for_same_spec(self) -> None:
         first = generate_manifest(SPEC)
@@ -69,6 +74,7 @@ class ManifestTests(unittest.TestCase):
         manifest = generate_manifest(spec)
 
         self.assertEqual(manifest["sample_count"], 32)
+        self.assertEqual(len(manifest["comparison_groups"]), 4)
         self.assertEqual(
             manifest["render"]["model_id"],
             "stabilityai/stable-diffusion-xl-base-1.0",
@@ -82,6 +88,11 @@ class ManifestTests(unittest.TestCase):
         self.assertIn("model-stabilityai/stable-diffusion-xl-base-1p0", manifest["samples"][0]["sample_id"])
         self.assertIn("adapter-loras/ari_v1psafetensors", manifest["samples"][0]["sample_id"])
         self.assertIn("steps-28", manifest["samples"][0]["sample_id"])
+        self.assertEqual(
+            manifest["samples"][0]["comparison_group_id"],
+            manifest["samples"][1]["comparison_group_id"],
+        )
+        self.assertEqual(len(manifest["comparison_groups"][0]["sample_ids"]), 8)
 
     def test_render_defaults_are_copied_without_sweeps(self) -> None:
         spec = {
@@ -108,6 +119,8 @@ class ManifestTests(unittest.TestCase):
                 "num_inference_steps": 30,
             },
         )
+        self.assertEqual(len(manifest["comparison_groups"]), 4)
+        self.assertEqual(len(manifest["comparison_groups"][0]["sample_ids"]), 1)
 
     def test_load_spec_from_toml(self) -> None:
         content = """
@@ -132,6 +145,7 @@ shots = ["portrait"]
 
         parsed = json.loads(payload)
         self.assertEqual(parsed["sample_count"], 4)
+        self.assertIn("comparison_group_id", parsed["samples"][0])
 
 
 if __name__ == "__main__":
