@@ -1,5 +1,11 @@
 # Daily Work Log
 
+## 2026-08-28
+- Added structural validation for experiment specs, including required experiment metadata, non-empty variant/sweep arrays, typed render values, and positive dimensions/step counts.
+- Added `ccl-manifest validate-spec` with concise failures for invalid specs, malformed TOML, and unreadable files instead of Python tracebacks.
+- Updated the README workflow and expanded the test suite to cover validation behavior and CLI success/failure paths.
+- Verified with `PYTHONPATH=src ./venv/bin/python -m unittest discover -s tests -v`, `./venv/bin/ccl-manifest validate-spec --spec examples/mira_consistency.toml`, and a 128-sample example manifest build.
+
 ## 2026-08-25
 - Extended `ccl-manifest` to support checkpoint-level render sweeps via `model_ids` and `lora_adapters`, so character-consistency runs can compare base models and adapter revisions in one manifest.
 - Propagated `model_id` and `lora_adapter` into per-sample `render_settings` and sample IDs for downstream Diffusers runners and traceable experiment outputs.
