@@ -17,3 +17,9 @@
 - Built `ccl-manifest`, a CLI that expands a TOML character-consistency spec into a reproducible JSON prompt manifest.
 - Added deterministic per-sample seed derivation, an example experiment spec, and unit tests covering manifest expansion and stability.
 - Verified with `PYTHONPATH=src ./venv/bin/python -m unittest discover -s tests` and a sample manifest build.
+
+## 2026-08-26
+- Added manifest-level comparison grouping so prompt-locked scene variants now carry a `comparison_group_id` and top-level `comparison_groups` metadata for downstream model/LoRA identity comparisons.
+- Kept group membership stable across render sweeps while preserving existing per-sample render settings and sample IDs.
+- Updated README output docs for comparison groups and verified the generated Mira manifest exposes 8 prompt groups over 128 samples.
+- Verified with `PYTHONPATH=src ./venv/bin/python -m unittest discover -s tests` and `./venv/bin/ccl-manifest build-manifest --spec examples/mira_consistency.toml --output out/mira_consistency.json`.
