@@ -61,9 +61,20 @@ RENDER_SLUG_KEYS = {
 }
 
 
+class SpecValidationError(ValueError):
+    """Raised when an experiment spec is structurally invalid."""
+
+
 def load_spec(path: str | Path) -> dict[str, Any]:
     with Path(path).open("rb") as handle:
         return tomllib.load(handle)
+
+
+def _ensure_table(spec: dict[str, Any], key: str) -> dict[str, Any]:
+    value = spec.get(key, {})
+    if not isinstance(value, dict):
+        raise SpecValidationError(f"'{key}' must be a TOML table.")
+    return value
 
 
 def _normalize_items(value: Any) -> list[str]:
@@ -72,6 +83,91 @@ def _normalize_items(value: Any) -> list[str]:
     if isinstance(value, str):
         return [value]
     return [str(item).strip() for item in value if str(item).strip()]
+
+
+def _require_non_empty_string(value: Any, field_name: str) -> str:
+    text = str(value).strip()
+    if not text:
+        raise SpecValidationError(f"'{field_name}' must be a non-empty string.")
+    return text
+
+
+def _require_int(value: Any, field_name: str, *, minimum: int | None = None) -> int:
+    if isinstance(value, bool):
+        raise SpecValidationError(f"'{field_name}' must be an integer.")
+    try:
+        parsed = int(value)
+    except (TypeError, ValueError) as exc:
+        raise SpecValidationError(f"'{field_name}' must be an integer.") from exc
+    if minimum is not None and parsed < minimum:
+        raise SpecValidationError(f"'{field_name}' must be >= {minimum}.")
+    return parsed
+
+
+def _require_float(value: Any, field_name: str, *, minimum: float | None = None) -> float:
+    if isinstance(value, bool):
+        raise SpecValidationError(f"'{field_name}' must be a number.")
+    try:
+        parsed = float(value)
+    except (TypeError, ValueError) as exc:
+        raise SpecValidationError(f"'{field_name}' must be a number.") from exc
+    if minimum is not None and parsed < minimum:
+        raise SpecValidationError(f"'{field_name}' must be >= {minimum}.")
+    return parsed
+
+
+def _validate_string_list(value: Any, field_name: str) -> list[str]:
+    items = _normalize_items(value)
+    if not items:
+        raise SpecValidationError(f"'{field_name}' must contain at least one non-empty value.")
+    return items
+
+
+def validate_spec(spec: dict[str, Any]) -> None:
+    experiment = _ensure_table(spec, "experiment")
+    _ensure_table(spec, "character")
+    _ensure_table(spec, "consistency")
+    variants = _ensure_table(spec, "variants")
+    render = _ensure_table(spec, "render")
+    sweeps = _ensure_table(spec, "sweeps")
+
+    _require_non_empty_string(experiment.get("name", ""), "experiment.name")
+    _require_non_empty_string(experiment.get("base_prompt", ""), "experiment.base_prompt")
+    _require_int(experiment.get("base_seed", 1), "experiment.base_seed", minimum=0)
+
+    for plural_key in DIMENSION_KEYS:
+        if plural_key in variants:
+            _validate_string_list(variants[plural_key], f"variants.{plural_key}")
+
+    string_render_fields = {"model_id", "lora_adapter"}
+    int_render_fields = {"width", "height", "num_inference_steps"}
+    float_render_fields = {"guidance_scale", "lora_scale"}
+
+    for key, value in render.items():
+        field_name = f"render.{key}"
+        if key in string_render_fields:
+            _require_non_empty_string(value, field_name)
+        elif key in int_render_fields:
+            _require_int(value, field_name, minimum=1)
+        elif key in float_render_fields:
+            _require_float(value, field_name, minimum=0.0)
+
+    for sweep_key, render_key in RENDER_SWEEP_KEYS.items():
+        if sweep_key not in sweeps:
+            continue
+        values = sweeps[sweep_key]
+        field_name = f"sweeps.{sweep_key}"
+        if not isinstance(values, list):
+            raise SpecValidationError(f"'{field_name}' must be a TOML array.")
+        if not values:
+            raise SpecValidationError(f"'{field_name}' must contain at least one value.")
+        for item in values:
+            if render_key in string_render_fields:
+                _require_non_empty_string(item, field_name)
+            elif render_key in int_render_fields:
+                _require_int(item, field_name, minimum=1)
+            elif render_key in float_render_fields:
+                _require_float(item, field_name, minimum=0.0)
 
 
 def _derive_seed(base_seed: int, experiment_name: str, sample_id: str) -> int:
@@ -154,6 +250,8 @@ def _build_comparison_group_id(experiment_name: str, tags: dict[str, str]) -> st
 
 
 def generate_manifest(spec: dict[str, Any]) -> dict[str, Any]:
+    validate_spec(spec)
+
     experiment = spec.get("experiment", {})
     character = spec.get("character", {})
     consistency = spec.get("consistency", {})

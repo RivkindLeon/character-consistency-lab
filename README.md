@@ -24,9 +24,15 @@ In practice, you also need to test generation settings that can preserve or dest
 python -m venv venv
 ./venv/bin/pip install -e .
 ./venv/bin/ccl-manifest \
+  validate-spec \
+  --spec examples/mira_consistency.toml
+./venv/bin/ccl-manifest \
+  build-manifest \
   --spec examples/mira_consistency.toml \
   --output out/mira_consistency.json
 ```
+
+`validate-spec` fails fast on malformed or empty experiment fields, invalid render sizes or step counts, and empty sweep arrays, which helps catch bad daily experiment configs before a longer generation run starts.
 
 Example output fields:
 

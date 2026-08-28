@@ -1,9 +1,17 @@
 import json
+import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
 
-from character_consistency_lab.manifest import generate_manifest, load_spec, manifest_to_json
+from character_consistency_lab.manifest import (
+    SpecValidationError,
+    generate_manifest,
+    load_spec,
+    manifest_to_json,
+    validate_spec,
+)
 
 
 SPEC = {
@@ -29,6 +37,43 @@ SPEC = {
 
 
 class ManifestTests(unittest.TestCase):
+    def test_validate_spec_accepts_valid_spec(self) -> None:
+        validate_spec(SPEC)
+
+    def test_validate_spec_requires_experiment_name(self) -> None:
+        spec = {
+            **SPEC,
+            "experiment": {
+                **SPEC["experiment"],
+                "name": " ",
+            },
+        }
+
+        with self.assertRaisesRegex(SpecValidationError, "experiment.name"):
+            validate_spec(spec)
+
+    def test_validate_spec_rejects_empty_sweep_values(self) -> None:
+        spec = {
+            **SPEC,
+            "sweeps": {
+                "guidance_scales": [],
+            },
+        }
+
+        with self.assertRaisesRegex(SpecValidationError, "sweeps.guidance_scales"):
+            validate_spec(spec)
+
+    def test_validate_spec_rejects_non_positive_render_dimensions(self) -> None:
+        spec = {
+            **SPEC,
+            "render": {
+                "width": 0,
+            },
+        }
+
+        with self.assertRaisesRegex(SpecValidationError, "render.width"):
+            validate_spec(spec)
+
     def test_generate_manifest_expands_variant_matrix(self) -> None:
         manifest = generate_manifest(SPEC)
 
@@ -146,6 +191,83 @@ shots = ["portrait"]
         parsed = json.loads(payload)
         self.assertEqual(parsed["sample_count"], 4)
         self.assertIn("comparison_group_id", parsed["samples"][0])
+
+    def test_validate_spec_cli_reports_success(self) -> None:
+        content = """
+[experiment]
+name = "hero-v1"
+base_prompt = "stylized illustration"
+
+[variants]
+shots = ["portrait"]
+""".strip()
+        with tempfile.TemporaryDirectory() as tmpdir:
+            path = Path(tmpdir) / "spec.toml"
+            path.write_text(content, encoding="utf-8")
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    "-m",
+                    "character_consistency_lab.cli",
+                    "validate-spec",
+                    "--spec",
+                    str(path),
+                ],
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+
+        self.assertEqual(result.returncode, 0)
+        self.assertIn("Spec is valid", result.stdout)
+
+    def test_validate_spec_cli_reports_failure(self) -> None:
+        content = """
+[experiment]
+name = ""
+base_prompt = "stylized illustration"
+""".strip()
+        with tempfile.TemporaryDirectory() as tmpdir:
+            path = Path(tmpdir) / "spec.toml"
+            path.write_text(content, encoding="utf-8")
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    "-m",
+                    "character_consistency_lab.cli",
+                    "validate-spec",
+                    "--spec",
+                    str(path),
+                ],
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("Spec validation failed", result.stderr)
+
+    def test_validate_spec_cli_reports_malformed_toml_without_traceback(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            path = Path(tmpdir) / "spec.toml"
+            path.write_text('[experiment\nname = "broken"', encoding="utf-8")
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    "-m",
+                    "character_consistency_lab.cli",
+                    "validate-spec",
+                    "--spec",
+                    str(path),
+                ],
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("Spec validation failed", result.stderr)
+        self.assertNotIn("Traceback", result.stderr)
 
 
 if __name__ == "__main__":
