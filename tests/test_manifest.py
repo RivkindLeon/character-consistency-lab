@@ -94,6 +94,23 @@ class ManifestTests(unittest.TestCase):
         self.assertEqual(first["samples"][0]["seed"], second["samples"][0]["seed"])
         self.assertEqual(first["samples"][0]["sample_id"], second["samples"][0]["sample_id"])
 
+    def test_render_variants_share_a_paired_seed_within_each_scene(self) -> None:
+        spec = {
+            **SPEC,
+            "sweeps": {
+                "guidance_scales": [5.0, 7.5],
+                "lora_scales": [0.6, 0.9],
+            },
+        }
+
+        manifest = generate_manifest(spec)
+        seeds_by_group: dict[str, set[int]] = {}
+        for sample in manifest["samples"]:
+            seeds_by_group.setdefault(sample["comparison_group_id"], set()).add(sample["seed"])
+
+        self.assertTrue(all(len(seeds) == 1 for seeds in seeds_by_group.values()))
+        self.assertEqual(len({next(iter(seeds)) for seeds in seeds_by_group.values()}), 4)
+
     def test_render_sweeps_expand_samples_and_emit_render_settings(self) -> None:
         spec = {
             **SPEC,

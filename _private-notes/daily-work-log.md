@@ -1,5 +1,10 @@
 # Daily Work Log
 
+## 2026-08-30
+- Added deterministic paired seeds for prompt-locked comparison groups, ensuring every model, LoRA, and hyperparameter variant for a scene starts from the same noise seed.
+- Kept seeds distinct across scene groups and stable across repeated manifest builds.
+- Added regression coverage for within-group seed pairing and cross-scene seed diversity, and documented the controlled-comparison behavior.
+
 ## 2026-08-28
 - Added structural validation for experiment specs, including required experiment metadata, non-empty variant/sweep arrays, typed render values, and positive dimensions/step counts.
 - Added `ccl-manifest validate-spec` with concise failures for invalid specs, malformed TOML, and unreadable files instead of Python tracebacks.
