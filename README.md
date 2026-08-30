@@ -5,7 +5,7 @@ Utilities and experiments for preserving character identity consistency across A
 ## Included today
 
 - `ccl-manifest`: expands a TOML experiment spec into a reproducible JSON prompt manifest
-- deterministic seed derivation per sample for repeatable runs
+- deterministic paired seed derivation for repeatable, controlled comparisons
 - prompt-locked scene variation grids for character consistency sweeps
 - render-parameter sweeps for model backbones, LoRA adapters, guidance scale, LoRA strength, steps, and canvas size
 
@@ -88,6 +88,8 @@ lora_scales = [0.65, 0.85]
 The generator creates the Cartesian product of the provided prompt variants and render sweeps, while keeping identity + consistency locks in every prompt. Each sample carries `render_settings` entries such as `model_id`, `lora_adapter`, `guidance_scale`, and `lora_scale`, so a downstream runner can compare consistency across checkpoints and adapter versions without re-parsing the TOML.
 
 It also emits a `comparison_group_id` per sample plus a top-level `comparison_groups` list. A comparison group represents one prompt-locked scene (same shot/expression/action/background/outfit/lighting) across multiple render settings, which makes it easy to score identity preservation for the same scene across models, LoRAs, or hyperparameters.
+
+All samples in a comparison group share the same deterministic seed. This keeps the initial latent noise paired across render settings, so observed identity differences are attributable to the model, LoRA, or hyperparameter under test rather than an unrelated seed change. Different scene groups receive different seeds.
 
 ## Run tests
 

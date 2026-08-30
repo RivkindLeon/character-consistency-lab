@@ -170,8 +170,8 @@ def validate_spec(spec: dict[str, Any]) -> None:
                 _require_float(item, field_name, minimum=0.0)
 
 
-def _derive_seed(base_seed: int, experiment_name: str, sample_id: str) -> int:
-    digest = sha256(f"{experiment_name}:{sample_id}".encode("utf-8")).digest()
+def _derive_seed(base_seed: int, experiment_name: str, comparison_group_id: str) -> int:
+    digest = sha256(f"{experiment_name}:{comparison_group_id}".encode("utf-8")).digest()
     offset = int.from_bytes(digest[:4], "big")
     return (base_seed + offset) % (2**31 - 1)
 
@@ -301,7 +301,9 @@ def generate_manifest(spec: dict[str, Any]) -> dict[str, Any]:
         sample = ManifestSample(
             sample_id=sample_id,
             comparison_group_id=comparison_group_id,
-            seed=_derive_seed(base_seed, experiment_name, sample_id),
+            # Pair the initial noise across render variants so model, adapter,
+            # and hyperparameter comparisons are not confounded by a new seed.
+            seed=_derive_seed(base_seed, experiment_name, comparison_group_id),
             prompt=_compose_prompt(
                 base_prompt=base_prompt,
                 character_name=character_name,
