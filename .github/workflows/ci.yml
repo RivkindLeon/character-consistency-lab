@@ -1,0 +1,29 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# The nightly development job opens a PR per session and merges it when this
+# workflow passes. Keep this workflow fast and free of large downloads:
+# section 28 of docs/IMPLEMENTATION_BRIEF.md requires ordinary CI to run
+# without pulling GPU model weights. GPU-dependent tests must be marked and
+# excluded here.
+jobs:
+  test:
+    name: install and test
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install package
+        run: pip install -e .
+
+      - name: Unit tests
+        run: python -m unittest discover -s tests -v
