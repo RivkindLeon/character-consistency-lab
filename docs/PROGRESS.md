@@ -30,6 +30,23 @@ specifies `src/character_lab/` with `data/`, `models/`, `training/`,
 the `models/` boundary, while the remaining requested package boundaries are
 not yet present.
 
+## Milestone 0.5 — Continuous Integration
+
+**Status: complete.**
+
+`.github/workflows/ci.yml` runs on every pull request and on every push to
+`main`: installs the package and runs the full unit test suite. It downloads no
+model weights, so it stays inside the constraint in section 28 of the brief.
+
+Registered as a required status check on `main`. A red build now blocks the
+merge instead of depending on the session's own judgement.
+
+Not yet included: linting, formatting, type checking, and the `pytest -m gpu`
+split section 28 asks for — the suite currently uses `unittest`. Add those when
+the tools are actually introduced, not before.
+
+**Before merging anything, read "If CI fails" in the brief.**
+
 ## Milestone 1 — Dataset + Benchmark
 
 **Status: not started.**
