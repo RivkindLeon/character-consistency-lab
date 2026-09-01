@@ -7,7 +7,7 @@ development job reads this file to decide what to work on next.
 sessions — each run starts with no history of previous runs. If it claims work
 that was not done, the next session builds on a lie.
 
-Last verified against the code: 2026-08-31.
+Last verified against the code: 2026-09-01.
 
 ---
 
@@ -19,16 +19,16 @@ Last verified against the code: 2026-08-31.
 |---|---|
 | Python package | done — `src/character_consistency_lab/` |
 | CLI | done — `ccl-manifest` (brief specifies `character-lab`) |
-| Tests | done — 17 unit tests, all passing |
+| Tests | done — 22 unit tests, all passing |
 | Configuration system | **not done** — ad-hoc TOML parsing; brief requires YAML + Pydantic |
-| Dataset abstraction | **not done** |
+| Dataset abstraction | done — typed character, record, split, and manifest contracts with JSONL loading |
 | Model backend interface | done — backend-neutral generation request/result contracts and a CPU-safe dry-run backend |
 
 The package layout still diverges from section 5 of the brief. The brief
 specifies `src/character_lab/` with `data/`, `models/`, `training/`,
 `inference/`, `evaluation/`, `experiments/`, `reports/`. The repository now has
-the `models/` boundary, while the remaining requested package boundaries are
-not yet present.
+the `data/` and `models/` boundaries, while the remaining requested package
+boundaries are not yet present.
 
 ## Milestone 0.5 — Continuous Integration
 
@@ -93,8 +93,11 @@ bottleneck.
 
 Concretely, the smallest useful next steps:
 
-1. Introduce the dataset abstraction and manifest schema from section 6.
-2. Replace ad-hoc TOML parsing with typed configuration.
+1. Replace ad-hoc TOML parsing with typed YAML + Pydantic configuration.
+
+The dataset abstraction and manifest record schema from section 6 are now
+implemented. Dataset filesystem/image validation, stats commands, character
+metadata YAML loading, and the benchmark scene set remain Milestone 1 work.
 
 The model backend interface is complete and verified. Concrete FLUX/SDXL
 backends remain later implementation work under baseline inference.
