@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import argparse
 from pathlib import Path
-import tomllib
 
+from .config import ConfigurationError
 from .manifest import SpecValidationError, generate_manifest, load_spec, manifest_to_json, validate_spec
 
 
@@ -31,17 +31,17 @@ def make_parser() -> argparse.ArgumentParser:
 
     build = subparsers.add_parser(
         "build-manifest",
-        help="Expand a TOML experiment spec into a reproducible prompt manifest.",
+        help="Expand a YAML experiment config into a reproducible prompt manifest.",
     )
-    build.add_argument("--spec", required=True, help="Path to a TOML experiment spec.")
+    build.add_argument("--spec", required=True, help="Path to a YAML experiment config.")
     build.add_argument("--output", required=True, help="Path to the generated JSON manifest.")
     build.set_defaults(func=build_manifest)
 
     validate = subparsers.add_parser(
         "validate-spec",
-        help="Validate a TOML experiment spec before running downstream jobs.",
+        help="Validate a YAML experiment config before running downstream jobs.",
     )
-    validate.add_argument("--spec", required=True, help="Path to a TOML experiment spec.")
+    validate.add_argument("--spec", required=True, help="Path to a YAML experiment config.")
     validate.set_defaults(func=validate_manifest_spec)
 
     return parser
@@ -52,7 +52,7 @@ def main() -> int:
     try:
         args = parser.parse_args()
         return args.func(args)
-    except (OSError, tomllib.TOMLDecodeError, SpecValidationError) as exc:
+    except (OSError, ConfigurationError, SpecValidationError) as exc:
         parser.exit(status=2, message=f"Spec validation failed: {exc}\n")
 
 

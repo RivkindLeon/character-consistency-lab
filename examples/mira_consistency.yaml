@@ -1,0 +1,42 @@
+experiment:
+  name: mira-consistency-v1
+  base_prompt: highly detailed cinematic illustration
+  negative_prompt: lowres, blurry, duplicated face, extra limbs
+  base_seed: 4242
+
+character:
+  name: Mira Vale
+  identity:
+    - short silver bob haircut
+    - amber eyes
+    - thin scar over left eyebrow
+
+consistency:
+  always:
+    - same adult woman
+    - same face shape
+    - same hairstyle
+    - same eyebrow scar
+
+variants:
+  shots: [portrait close-up, full body]
+  expressions: [calm confidence, determined focus]
+  outfits: [red trench coat]
+  backgrounds: [neon rainy alley, sunlit train platform]
+  lighting: [soft rim light]
+  actions: [standing still]
+
+render:
+  model_id: stabilityai/stable-diffusion-xl-base-1.0
+  lora_adapter: loras/mira_v1.safetensors
+  width: 768
+  height: 1024
+  num_inference_steps: 32
+
+sweeps:
+  model_ids:
+    - stabilityai/stable-diffusion-xl-base-1.0
+    - RunDiffusion/Juggernaut-XL-v9
+  lora_adapters: [loras/mira_v1.safetensors, loras/mira_v2.safetensors]
+  guidance_scales: [6.0, 7.5]
+  lora_scales: [0.65, 0.85]

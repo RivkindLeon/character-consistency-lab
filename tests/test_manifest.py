@@ -184,22 +184,34 @@ class ManifestTests(unittest.TestCase):
         self.assertEqual(len(manifest["comparison_groups"]), 4)
         self.assertEqual(len(manifest["comparison_groups"][0]["sample_ids"]), 1)
 
-    def test_load_spec_from_toml(self) -> None:
+    def test_load_spec_from_yaml(self) -> None:
         content = """
-[experiment]
-name = "hero-v1"
-base_prompt = "stylized illustration"
-
-[variants]
-shots = ["portrait"]
+experiment:
+  name: hero-v1
+  base_prompt: stylized illustration
+variants:
+  shots: [portrait]
 """.strip()
         with tempfile.TemporaryDirectory() as tmpdir:
-            path = Path(tmpdir) / "spec.toml"
+            path = Path(tmpdir) / "spec.yaml"
             path.write_text(content, encoding="utf-8")
             loaded = load_spec(path)
 
         self.assertEqual(loaded["experiment"]["name"], "hero-v1")
         self.assertEqual(loaded["variants"]["shots"], ["portrait"])
+
+    def test_load_spec_rejects_unknown_fields(self) -> None:
+        content = """
+experiment:
+  name: hero-v1
+  base_prompt: stylized illustration
+  typo_field: ignored-by-untyped-parsers
+""".strip()
+        with tempfile.TemporaryDirectory() as tmpdir:
+            path = Path(tmpdir) / "spec.yaml"
+            path.write_text(content, encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "typo_field"):
+                load_spec(path)
 
     def test_manifest_to_json_is_valid_json(self) -> None:
         manifest = generate_manifest(SPEC)
@@ -210,16 +222,9 @@ shots = ["portrait"]
         self.assertIn("comparison_group_id", parsed["samples"][0])
 
     def test_validate_spec_cli_reports_success(self) -> None:
-        content = """
-[experiment]
-name = "hero-v1"
-base_prompt = "stylized illustration"
-
-[variants]
-shots = ["portrait"]
-""".strip()
+        content = "experiment:\n  name: hero-v1\n  base_prompt: stylized illustration"
         with tempfile.TemporaryDirectory() as tmpdir:
-            path = Path(tmpdir) / "spec.toml"
+            path = Path(tmpdir) / "spec.yaml"
             path.write_text(content, encoding="utf-8")
             result = subprocess.run(
                 [
@@ -239,13 +244,9 @@ shots = ["portrait"]
         self.assertIn("Spec is valid", result.stdout)
 
     def test_validate_spec_cli_reports_failure(self) -> None:
-        content = """
-[experiment]
-name = ""
-base_prompt = "stylized illustration"
-""".strip()
+        content = "experiment:\n  name: ''\n  base_prompt: stylized illustration"
         with tempfile.TemporaryDirectory() as tmpdir:
-            path = Path(tmpdir) / "spec.toml"
+            path = Path(tmpdir) / "spec.yaml"
             path.write_text(content, encoding="utf-8")
             result = subprocess.run(
                 [
@@ -264,10 +265,10 @@ base_prompt = "stylized illustration"
         self.assertEqual(result.returncode, 2)
         self.assertIn("Spec validation failed", result.stderr)
 
-    def test_validate_spec_cli_reports_malformed_toml_without_traceback(self) -> None:
+    def test_validate_spec_cli_reports_malformed_yaml_without_traceback(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
-            path = Path(tmpdir) / "spec.toml"
-            path.write_text('[experiment\nname = "broken"', encoding="utf-8")
+            path = Path(tmpdir) / "spec.yaml"
+            path.write_text("experiment: [broken", encoding="utf-8")
             result = subprocess.run(
                 [
                     sys.executable,

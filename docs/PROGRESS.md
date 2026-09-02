@@ -7,20 +7,20 @@ development job reads this file to decide what to work on next.
 sessions — each run starts with no history of previous runs. If it claims work
 that was not done, the next session builds on a lie.
 
-Last verified against the code: 2026-09-01.
+Last verified against the code: 2026-09-02.
 
 ---
 
 ## Milestone 0 — ML Project Foundation
 
-**Status: partially complete.**
+**Status: complete.**
 
 | Required | State |
 |---|---|
 | Python package | done — `src/character_consistency_lab/` |
 | CLI | done — `ccl-manifest` (brief specifies `character-lab`) |
-| Tests | done — 22 unit tests, all passing |
-| Configuration system | **not done** — ad-hoc TOML parsing; brief requires YAML + Pydantic |
+| Tests | done — 23 unit tests, all passing |
+| Configuration system | done — strict typed YAML loading with Pydantic, including range and unknown-field validation |
 | Dataset abstraction | done — typed character, record, split, and manifest contracts with JSONL loading |
 | Model backend interface | done — backend-neutral generation request/result contracts and a CPU-safe dry-run backend |
 
@@ -51,7 +51,7 @@ the tools are actually introduced, not before.
 
 **Status: not started.**
 
-What exists is a *prompt* manifest generator: it expands a TOML experiment spec
+What exists is a *prompt* manifest generator: it expands a typed YAML experiment config
 into a JSON grid of prompt/seed/render-setting combinations, with deterministic
 seeds and comparison groups. That is genuinely useful and it works, but it is
 not what this milestone asks for.
@@ -63,10 +63,9 @@ train/validation/reference splits — plus `character-lab dataset validate` and
 
 ## Milestone 2 — Baseline Inference
 
-**Status: not started.** No model is ever loaded. `pyproject.toml` declares
-`dependencies = []` and the entire source imports only the standard library
-(`argparse`, `json`, `tomllib`, `hashlib`, `itertools`, `pathlib`,
-`dataclasses`). Nothing in this repository generates an image.
+**Status: not started.** No concrete model is ever loaded and nothing in this
+repository generates an image. The only runtime dependencies are Pydantic and
+PyYAML for configuration; no diffusion or tensor libraries are installed yet.
 
 ## Milestone 3 — LoRA Training
 
@@ -86,14 +85,9 @@ structural control, multi-character.
 
 ## Where the next session should start
 
-Finish Milestone 0 before adding more to the manifest generator. Six consecutive
-sessions (23, 24, 25, 26, 29, 30 August) all refined the same manifest
-generator without moving toward the project goal. The generator is not the
-bottleneck.
-
-Concretely, the smallest useful next steps:
-
-1. Replace ad-hoc TOML parsing with typed YAML + Pydantic configuration.
+Milestone 0 is complete. Start Milestone 1 with dataset filesystem/image
+validation and the `character-lab dataset validate` command. Do not add more
+prompt-manifest features before implementing the actual dataset workflow.
 
 The dataset abstraction and manifest record schema from section 6 are now
 implemented. Dataset filesystem/image validation, stats commands, character

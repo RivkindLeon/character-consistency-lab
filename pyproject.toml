@@ -8,7 +8,10 @@ version = "0.1.0"
 description = "Tools and experiments for character identity consistency across generated images."
 readme = "README.md"
 requires-python = ">=3.12"
-dependencies = []
+dependencies = [
+  "pydantic>=2.8,<3",
+  "PyYAML>=6,<7",
+]
 
 [project.scripts]
 ccl-manifest = "character_consistency_lab.cli:main"

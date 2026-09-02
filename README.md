@@ -4,7 +4,7 @@ Utilities and experiments for preserving character identity consistency across A
 
 ## Included today
 
-- `ccl-manifest`: expands a TOML experiment spec into a reproducible JSON prompt manifest
+- `ccl-manifest`: expands a typed YAML experiment config into a reproducible JSON prompt manifest
 - deterministic paired seed derivation for repeatable, controlled comparisons
 - prompt-locked scene variation grids for character consistency sweeps
 - render-parameter sweeps for model backbones, LoRA adapters, guidance scale, LoRA strength, steps, and canvas size
@@ -25,10 +25,10 @@ python -m venv venv
 ./venv/bin/pip install -e .
 ./venv/bin/ccl-manifest \
   validate-spec \
-  --spec examples/mira_consistency.toml
+  --spec examples/mira_consistency.yaml
 ./venv/bin/ccl-manifest \
   build-manifest \
-  --spec examples/mira_consistency.toml \
+  --spec examples/mira_consistency.yaml \
   --output out/mira_consistency.json
 ```
 
@@ -46,46 +46,45 @@ Example output fields:
 
 ## Spec format
 
-```toml
-[experiment]
-name = "mira-consistency-v1"
-base_prompt = "highly detailed cinematic illustration"
-negative_prompt = "lowres, blurry, duplicated face, extra limbs"
-base_seed = 4242
+```yaml
+experiment:
+  name: mira-consistency-v1
+  base_prompt: highly detailed cinematic illustration
+  negative_prompt: lowres, blurry, duplicated face, extra limbs
+  base_seed: 4242
 
-[character]
-name = "Mira Vale"
-identity = ["short silver bob haircut", "amber eyes"]
+character:
+  name: Mira Vale
+  identity: [short silver bob haircut, amber eyes]
 
-[consistency]
-always = ["same adult woman", "same face shape", "same hairstyle"]
+consistency:
+  always: [same adult woman, same face shape, same hairstyle]
 
-[variants]
-shots = ["portrait close-up", "full body"]
-expressions = ["calm confidence", "determined focus"]
-actions = ["standing still"]
-backgrounds = ["neon rainy alley", "sunlit train platform"]
-outfits = ["red trench coat"]
-lighting = ["soft rim light"]
+variants:
+  shots: [portrait close-up, full body]
+  expressions: [calm confidence, determined focus]
+  actions: [standing still]
+  backgrounds: [neon rainy alley, sunlit train platform]
+  outfits: [red trench coat]
+  lighting: [soft rim light]
 
-[render]
-model_id = "stabilityai/stable-diffusion-xl-base-1.0"
-lora_adapter = "loras/mira_v1.safetensors"
-width = 768
-height = 1024
-num_inference_steps = 32
+render:
+  model_id: stabilityai/stable-diffusion-xl-base-1.0
+  lora_adapter: loras/mira_v1.safetensors
+  width: 768
+  height: 1024
+  num_inference_steps: 32
 
-[sweeps]
-model_ids = [
-  "stabilityai/stable-diffusion-xl-base-1.0",
-  "RunDiffusion/Juggernaut-XL-v9",
-]
-lora_adapters = ["loras/mira_v1.safetensors", "loras/mira_v2.safetensors"]
-guidance_scales = [6.0, 7.5]
-lora_scales = [0.65, 0.85]
+sweeps:
+  model_ids:
+    - stabilityai/stable-diffusion-xl-base-1.0
+    - RunDiffusion/Juggernaut-XL-v9
+  lora_adapters: [loras/mira_v1.safetensors, loras/mira_v2.safetensors]
+  guidance_scales: [6.0, 7.5]
+  lora_scales: [0.65, 0.85]
 ```
 
-The generator creates the Cartesian product of the provided prompt variants and render sweeps, while keeping identity + consistency locks in every prompt. Each sample carries `render_settings` entries such as `model_id`, `lora_adapter`, `guidance_scale`, and `lora_scale`, so a downstream runner can compare consistency across checkpoints and adapter versions without re-parsing the TOML.
+The generator creates the Cartesian product of the provided prompt variants and render sweeps, while keeping identity + consistency locks in every prompt. Pydantic validates the YAML types, ranges, and field names before expansion. Each sample carries `render_settings` entries such as `model_id`, `lora_adapter`, `guidance_scale`, and `lora_scale`, so a downstream runner can compare consistency across checkpoints and adapter versions without re-parsing configuration.
 
 It also emits a `comparison_group_id` per sample plus a top-level `comparison_groups` list. A comparison group represents one prompt-locked scene (same shot/expression/action/background/outfit/lighting) across multiple render settings, which makes it easy to score identity preservation for the same scene across models, LoRAs, or hyperparameters.
 
