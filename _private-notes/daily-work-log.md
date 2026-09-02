@@ -1,5 +1,16 @@
 # Daily Work Log
 
+## 2026-09-02
+- Replaced ad-hoc TOML experiment parsing with strict typed YAML configuration using Pydantic and PyYAML.
+- Added range checks, unknown-field rejection, friendly malformed-YAML CLI errors, a migrated example config, and updated documentation.
+- Verified with `PYTHONPATH=src ./venv/bin/python -m unittest discover -s tests -v` (23 tests passing), both CLI commands against the YAML example (128 prompts), and `git diff --check`.
+
+## 2026-09-01
+- Added the first real dataset abstraction: typed character definitions, dataset records, supported splits, and complete manifests independent of model code.
+- Added JSONL manifest loading with actionable schema errors for invalid records, duplicate character metadata, unknown character IDs, and malformed JSON.
+- Kept image access out of the loader so later validation can inspect files without silently modifying source data.
+- Verified with `PYTHONPATH=src ./venv/bin/python -m unittest discover -s tests -v` (22 tests passing) and `git diff --check`.
+
 ## 2026-08-31
 - Added a backend-neutral model interface with validated generation requests and reproducible result metadata.
 - Added a CPU-safe dry-run backend that never loads model libraries or writes an image, establishing the seam for future FLUX and SDXL implementations.
