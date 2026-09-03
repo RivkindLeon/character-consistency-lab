@@ -7,6 +7,7 @@ from .dataset import (
     DatasetSchemaError,
     DatasetSplit,
 )
+from .validation import ValidationIssue, load_dataset, validate_dataset
 
 __all__ = [
     "Character",
@@ -14,4 +15,7 @@ __all__ = [
     "DatasetRecord",
     "DatasetSchemaError",
     "DatasetSplit",
+    "ValidationIssue",
+    "load_dataset",
+    "validate_dataset",
 ]
