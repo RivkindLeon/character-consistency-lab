@@ -8,6 +8,7 @@ Utilities and experiments for preserving character identity consistency across A
 - deterministic paired seed derivation for repeatable, controlled comparisons
 - prompt-locked scene variation grids for character consistency sweeps
 - render-parameter sweeps for model backbones, LoRA adapters, guidance scale, LoRA strength, steps, and canvas size
+- dataset validation for metadata, missing or corrupt images, duplicate paths, and train/reference leakage
 
 ## Why this helps
 
@@ -30,7 +31,13 @@ python -m venv venv
   build-manifest \
   --spec examples/mira_consistency.yaml \
   --output out/mira_consistency.json
+
+./venv/bin/character-lab dataset validate datasets/my_dataset
 ```
+
+A dataset directory contains `characters.yaml` and `manifest.jsonl`. Validation
+opens images without modifying them and uses content hashes to catch an image
+copied under different names into both the training and reference splits.
 
 `validate-spec` fails fast on malformed or empty experiment fields, invalid render sizes or step counts, and empty sweep arrays, which helps catch bad daily experiment configs before a longer generation run starts.
 

@@ -7,7 +7,7 @@ development job reads this file to decide what to work on next.
 sessions — each run starts with no history of previous runs. If it claims work
 that was not done, the next session builds on a lie.
 
-Last verified against the code: 2026-09-02.
+Last verified against the code: 2026-09-03.
 
 ---
 
@@ -49,7 +49,7 @@ the tools are actually introduced, not before.
 
 ## Milestone 1 — Dataset + Benchmark
 
-**Status: not started.**
+**Status: in progress.**
 
 What exists is a *prompt* manifest generator: it expands a typed YAML experiment config
 into a JSON grid of prompt/seed/render-setting combinations, with deterministic
@@ -59,7 +59,15 @@ not what this milestone asks for.
 The brief asks for a *dataset* manifest — images, character IDs, captions,
 train/validation/reference splits — plus `character-lab dataset validate` and
 `character-lab dataset stats`, plus a benchmark scene set of ~20 scenes in
-`benchmarks/scenes.yaml`. None of that exists.
+`benchmarks/scenes.yaml`.
+
+Dataset validation is now implemented and verified. The conventional dataset
+layout uses `characters.yaml` plus `manifest.jsonl`. The validator reports
+missing and corrupt images, duplicate manifest paths, schema errors including
+missing captions and unknown characters, and train/reference leakage detected
+from file content rather than filenames. It never modifies source images.
+
+Dataset stats and the benchmark scene set remain unfinished.
 
 ## Milestone 2 — Baseline Inference
 
@@ -85,13 +93,13 @@ structural control, multi-character.
 
 ## Where the next session should start
 
-Milestone 0 is complete. Start Milestone 1 with dataset filesystem/image
-validation and the `character-lab dataset validate` command. Do not add more
-prompt-manifest features before implementing the actual dataset workflow.
+Milestone 0 is complete. Continue Milestone 1 with `character-lab dataset
+stats`. Do not add more prompt-manifest features before implementing the actual
+dataset workflow.
 
-The dataset abstraction and manifest record schema from section 6 are now
-implemented. Dataset filesystem/image validation, stats commands, character
-metadata YAML loading, and the benchmark scene set remain Milestone 1 work.
+The dataset abstraction, manifest record schema, character metadata YAML
+loading, and filesystem/image validation from sections 6–7 are implemented.
+Dataset stats and the benchmark scene set remain Milestone 1 work.
 
 The model backend interface is complete and verified. Concrete FLUX/SDXL
 backends remain later implementation work under baseline inference.
