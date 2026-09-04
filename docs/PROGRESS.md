@@ -7,7 +7,7 @@ development job reads this file to decide what to work on next.
 sessions — each run starts with no history of previous runs. If it claims work
 that was not done, the next session builds on a lie.
 
-Last verified against the code: 2026-09-03.
+Last verified against the code: 2026-09-04.
 
 ---
 
@@ -67,7 +67,11 @@ missing and corrupt images, duplicate manifest paths, schema errors including
 missing captions and unknown characters, and train/reference leakage detected
 from file content rather than filenames. It never modifies source images.
 
-Dataset stats and the benchmark scene set remain unfinished.
+Dataset stats are implemented and verified through `character-lab dataset
+stats`. The command validates the dataset first, then reports deterministic
+per-character counts for every split and the source-image resolution
+distribution without modifying images. The benchmark scene set remains
+unfinished.
 
 ## Milestone 2 — Baseline Inference
 
@@ -93,13 +97,13 @@ structural control, multi-character.
 
 ## Where the next session should start
 
-Milestone 0 is complete. Continue Milestone 1 with `character-lab dataset
-stats`. Do not add more prompt-manifest features before implementing the actual
-dataset workflow.
+Milestone 0 is complete. Continue Milestone 1 with the fixed benchmark scene set
+of approximately 20 scenes in `benchmarks/scenes.yaml`. Do not add more
+prompt-manifest features before implementing the actual dataset workflow.
 
 The dataset abstraction, manifest record schema, character metadata YAML
 loading, and filesystem/image validation from sections 6–7 are implemented.
-Dataset stats and the benchmark scene set remain Milestone 1 work.
+Dataset stats are complete. The benchmark scene set remains Milestone 1 work.
 
 The model backend interface is complete and verified. Concrete FLUX/SDXL
 backends remain later implementation work under baseline inference.

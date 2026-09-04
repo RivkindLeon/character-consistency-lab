@@ -4,7 +4,13 @@ import argparse
 from pathlib import Path
 
 from .config import ConfigurationError
-from .data import DatasetSchemaError, load_dataset, validate_dataset
+from .data import (
+    DatasetSchemaError,
+    calculate_dataset_stats,
+    format_dataset_stats,
+    load_dataset,
+    validate_dataset,
+)
 from .manifest import SpecValidationError, generate_manifest, load_spec, manifest_to_json, validate_spec
 
 
@@ -37,6 +43,18 @@ def validate_dataset_command(args: argparse.Namespace) -> int:
     return 0
 
 
+def dataset_stats_command(args: argparse.Namespace) -> int:
+    manifest = load_dataset(args.root)
+    issues = validate_dataset(manifest)
+    if issues:
+        for issue in issues:
+            print(f"[{issue.code}] {issue.message}")
+        print(f"Cannot calculate stats: dataset has {len(issues)} issue(s)")
+        return 1
+    print(format_dataset_stats(manifest, calculate_dataset_stats(manifest)))
+    return 0
+
+
 def make_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Character Consistency Lab tools")
     parser.set_defaults(func=None)
@@ -64,6 +82,11 @@ def make_parser() -> argparse.ArgumentParser:
     )
     dataset_validate.add_argument("root", help="Dataset directory.")
     dataset_validate.set_defaults(func=validate_dataset_command)
+    dataset_stats = dataset_commands.add_parser(
+        "stats", help="Report image counts by character/split and resolution."
+    )
+    dataset_stats.add_argument("root", help="Dataset directory.")
+    dataset_stats.set_defaults(func=dataset_stats_command)
 
     return parser
 

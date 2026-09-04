@@ -7,7 +7,12 @@ from pathlib import Path
 from PIL import Image
 
 from character_consistency_lab.cli import main
-from character_consistency_lab.data import load_dataset, validate_dataset
+from character_consistency_lab.data import (
+    DatasetSplit,
+    calculate_dataset_stats,
+    load_dataset,
+    validate_dataset,
+)
 
 
 def write_image(path: Path, color: str = "red") -> None:
@@ -38,6 +43,53 @@ class DatasetValidationTests(unittest.TestCase):
                 result = main_with_args(["dataset", "validate", str(root)])
             self.assertEqual(result, 0)
             self.assertIn("Dataset is valid", output.getvalue())
+
+    def test_stats_count_every_split_and_resolution(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            write_image(root / "images/train.png")
+            write_image(root / "images/validation.png", "green")
+            write_image(root / "images/reference.png", "blue")
+            write_dataset(root, [
+                '{"image":"images/train.png","character":"dino","caption":"a","split":"train"}',
+                '{"image":"images/validation.png","character":"dino","caption":"b","split":"validation"}',
+                '{"image":"images/reference.png","character":"dino","caption":"c","split":"reference"}',
+            ])
+
+            manifest = load_dataset(root)
+            stats = calculate_dataset_stats(manifest)
+            self.assertEqual(stats.counts["dino"], {
+                DatasetSplit.TRAIN: 1,
+                DatasetSplit.VALIDATION: 1,
+                DatasetSplit.REFERENCE: 1,
+            })
+            self.assertEqual(stats.resolutions, {(8, 6): 3})
+
+            output = io.StringIO()
+            with redirect_stdout(output):
+                result = main_with_args(["dataset", "stats", str(root)])
+            self.assertEqual(result, 0)
+            self.assertEqual(output.getvalue(), (
+                "Characters: 1\n\n"
+                "dino\n"
+                "train: 1\n"
+                "validation: 1\n"
+                "reference: 1\n\n"
+                "Resolution distribution:\n"
+                "8x6: 3\n"
+            ))
+
+    def test_stats_refuses_invalid_dataset(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            write_dataset(root, [
+                '{"image":"images/missing.png","character":"dino","caption":"a","split":"train"}',
+            ])
+            output = io.StringIO()
+            with redirect_stdout(output):
+                result = main_with_args(["dataset", "stats", str(root)])
+            self.assertEqual(result, 1)
+            self.assertIn("Cannot calculate stats", output.getvalue())
 
     def test_reports_missing_duplicate_invalid_and_leaked_images(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
