@@ -8,6 +8,7 @@ from .dataset import (
     DatasetSplit,
 )
 from .validation import ValidationIssue, load_dataset, validate_dataset
+from .stats import DatasetStats, calculate_dataset_stats, format_dataset_stats
 
 __all__ = [
     "Character",
@@ -18,4 +19,7 @@ __all__ = [
     "ValidationIssue",
     "load_dataset",
     "validate_dataset",
+    "DatasetStats",
+    "calculate_dataset_stats",
+    "format_dataset_stats",
 ]

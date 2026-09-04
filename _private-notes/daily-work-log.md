@@ -1,5 +1,17 @@
 # Daily Work Log
 
+## 2026-09-04
+- Implemented Milestone 1 dataset statistics and the `character-lab dataset stats` command.
+- Added deterministic per-character counts for train, validation, and reference splits plus source-image resolution distributions; invalid datasets are rejected before statistics are computed.
+- Updated `docs/PROGRESS.md`; the fixed benchmark scene set is the next unfinished Milestone 1 item.
+- Verified with `PYTHONPATH=src ./venv/bin/python -m unittest discover -s tests -v` (27 tests passing), `./venv/bin/character-lab dataset --help`, and `git diff --check`.
+
+## 2026-09-03
+- Implemented the Milestone 1 dataset validator and the `character-lab dataset validate` command.
+- Added conventional `characters.yaml` + `manifest.jsonl` loading and checks for missing/corrupt images, duplicate paths, dataset-root escapes, and content-based train/reference leakage without modifying source images.
+- Added Pillow as the first image-processing dependency, documented the workflow, and kept `docs/PROGRESS.md` explicit that dataset stats and benchmark scenes remain unfinished.
+- Verified with `PYTHONPATH=src ./venv/bin/python -m unittest discover -s tests -v` (25 tests passing), `./venv/bin/character-lab --help`, and `git diff --check`.
+
 ## 2026-09-02
 - Replaced ad-hoc TOML experiment parsing with strict typed YAML configuration using Pydantic and PyYAML.
 - Added range checks, unknown-field rejection, friendly malformed-YAML CLI errors, a migrated example config, and updated documentation.
