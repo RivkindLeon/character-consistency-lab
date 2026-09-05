@@ -9,6 +9,8 @@ Utilities and experiments for preserving character identity consistency across A
 - prompt-locked scene variation grids for character consistency sweeps
 - render-parameter sweeps for model backbones, LoRA adapters, guidance scale, LoRA strength, steps, and canvas size
 - dataset validation for metadata, missing or corrupt images, duplicate paths, and train/reference leakage
+- dataset statistics by character, split, and source-image resolution
+- a versioned 20-scene benchmark with fixed prompts and seeds
 
 ## Why this helps
 
@@ -33,11 +35,18 @@ python -m venv venv
   --output out/mira_consistency.json
 
 ./venv/bin/character-lab dataset validate datasets/my_dataset
+./venv/bin/character-lab dataset stats datasets/my_dataset
 ```
 
 A dataset directory contains `characters.yaml` and `manifest.jsonl`. Validation
 opens images without modifying them and uses content hashes to catch an image
 copied under different names into both the training and reference splits.
+
+The fixed benchmark lives at `benchmarks/scenes.yaml`. Its typed loader preserves
+the explicit prompt and seed attached to every scene, so baseline, LoRA, and
+later conditioning experiments can render exactly the same inputs. The 20 scenes
+span single-character framing and pose changes through multi-character and
+complex compositions; add new scenes without changing existing IDs or seeds.
 
 `validate-spec` fails fast on malformed or empty experiment fields, invalid render sizes or step counts, and empty sweep arrays, which helps catch bad daily experiment configs before a longer generation run starts.
 
