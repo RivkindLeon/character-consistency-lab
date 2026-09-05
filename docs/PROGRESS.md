@@ -7,7 +7,7 @@ development job reads this file to decide what to work on next.
 sessions — each run starts with no history of previous runs. If it claims work
 that was not done, the next session builds on a lie.
 
-Last verified against the code: 2026-09-04.
+Last verified against the code: 2026-09-05.
 
 ---
 
@@ -49,7 +49,7 @@ the tools are actually introduced, not before.
 
 ## Milestone 1 — Dataset + Benchmark
 
-**Status: in progress.**
+**Status: complete.**
 
 What exists is a *prompt* manifest generator: it expands a typed YAML experiment config
 into a JSON grid of prompt/seed/render-setting combinations, with deterministic
@@ -70,8 +70,14 @@ from file content rather than filenames. It never modifies source images.
 Dataset stats are implemented and verified through `character-lab dataset
 stats`. The command validates the dataset first, then reports deterministic
 per-character counts for every split and the source-image resolution
-distribution without modifying images. The benchmark scene set remains
-unfinished.
+distribution without modifying images.
+
+The versioned benchmark schema and fixed 20-scene set are implemented in
+`benchmarks/scenes.yaml`. Each scene stores an explicit prompt and seed for
+reuse across experiment variants. The set covers neutral, unusual-pose,
+close-up, distant, lighting, background, camera-angle, two-character,
+three-character, and complex-composition cases. Schema validation rejects
+malformed scenes, duplicate IDs, invalid seeds, and unknown fields.
 
 ## Milestone 2 — Baseline Inference
 
@@ -97,13 +103,14 @@ structural control, multi-character.
 
 ## Where the next session should start
 
-Milestone 0 is complete. Continue Milestone 1 with the fixed benchmark scene set
-of approximately 20 scenes in `benchmarks/scenes.yaml`. Do not add more
-prompt-manifest features before implementing the actual dataset workflow.
+Milestones 0, 0.5, and 1 are complete. Start Milestone 2 with baseline inference:
+define a concrete, optional Diffusers backend that can be configured and dry-run
+on this CPU-only host without importing or downloading model weights. Preserve
+the backend-neutral interface and keep ordinary tests CPU-safe.
 
 The dataset abstraction, manifest record schema, character metadata YAML
 loading, and filesystem/image validation from sections 6–7 are implemented.
-Dataset stats are complete. The benchmark scene set remains Milestone 1 work.
+Dataset stats and the fixed benchmark scene set are complete.
 
 The model backend interface is complete and verified. Concrete FLUX/SDXL
 backends remain later implementation work under baseline inference.

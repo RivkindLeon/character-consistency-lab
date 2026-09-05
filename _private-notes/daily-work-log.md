@@ -1,5 +1,11 @@
 # Daily Work Log
 
+## 2026-09-05
+- Completed Milestone 1 with a versioned, typed benchmark schema and fixed 20-scene set.
+- Added explicit reusable prompts and seeds covering every benchmark category in the implementation brief, including multi-character and complex compositions.
+- Added validation for malformed scenes, duplicate IDs, invalid seeds, and unknown fields; updated README and `docs/PROGRESS.md` to make Milestone 2 the next work.
+- Verified with `PYTHONPATH=src ./venv/bin/python -m unittest discover -s tests -v` (32 tests passing), `./venv/bin/character-lab dataset --help`, and `git diff --check`.
+
 ## 2026-09-04
 - Implemented Milestone 1 dataset statistics and the `character-lab dataset stats` command.
 - Added deterministic per-character counts for train, validation, and reference splits plus source-image resolution distributions; invalid datasets are rejected before statistics are computed.

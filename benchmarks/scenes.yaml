@@ -1,0 +1,102 @@
+version: 1
+scenes:
+  - id: dino_neutral
+    category: single_character_neutral
+    characters: [dino]
+    prompt: chr_dino standing naturally on a plain warm background, children's book illustration
+    seed: 42137
+  - id: tira_neutral
+    category: single_character_neutral
+    characters: [tira]
+    prompt: chr_tira standing naturally on a plain warm background, children's book illustration
+    seed: 42138
+  - id: dipo_neutral
+    category: single_character_neutral
+    characters: [dipo]
+    prompt: chr_dipo standing naturally on a plain warm background, children's book illustration
+    seed: 42139
+  - id: dino_running
+    category: unusual_pose
+    characters: [dino]
+    prompt: chr_dino running through tall grass with one foot in the air, children's book illustration
+    seed: 42140
+  - id: tira_dancing
+    category: unusual_pose
+    characters: [tira]
+    prompt: chr_tira dancing with arms extended and one leg raised, children's book illustration
+    seed: 42141
+  - id: dipo_reaching
+    category: unusual_pose
+    characters: [dipo]
+    prompt: chr_dipo reaching upward to pick an apple from a tree, children's book illustration
+    seed: 42142
+  - id: dino_closeup
+    category: close_up
+    characters: [dino]
+    prompt: close-up portrait of chr_dino smiling directly at the viewer, children's book illustration
+    seed: 42143
+  - id: tira_closeup_profile
+    category: close_up
+    characters: [tira]
+    prompt: close-up profile portrait of chr_tira looking to the left, children's book illustration
+    seed: 42144
+  - id: dipo_distant
+    category: distant
+    characters: [dipo]
+    prompt: distant wide shot of chr_dipo walking across a broad valley, children's book illustration
+    seed: 42145
+  - id: dino_tiny_in_city
+    category: distant
+    characters: [dino]
+    prompt: very wide city square with chr_dino appearing small in the distance, children's book illustration
+    seed: 42146
+  - id: tira_moonlight
+    category: lighting_change
+    characters: [tira]
+    prompt: chr_tira beside a quiet lake under cool moonlight, children's book illustration
+    seed: 42147
+  - id: dipo_firelight
+    category: lighting_change
+    characters: [dipo]
+    prompt: chr_dipo reading beside a campfire lit by warm flickering light, children's book illustration
+    seed: 42148
+  - id: dino_snow
+    category: background_change
+    characters: [dino]
+    prompt: chr_dino walking through a snowy pine forest, children's book illustration
+    seed: 42149
+  - id: tira_market
+    category: background_change
+    characters: [tira]
+    prompt: chr_tira exploring a colorful crowded outdoor market, children's book illustration
+    seed: 42150
+  - id: dipo_low_angle
+    category: camera_angle
+    characters: [dipo]
+    prompt: low-angle view of chr_dipo standing on a hill against the sky, children's book illustration
+    seed: 42151
+  - id: dino_overhead
+    category: camera_angle
+    characters: [dino]
+    prompt: overhead bird's-eye view of chr_dino crossing stepping stones in a stream, children's book illustration
+    seed: 42152
+  - id: dino_tira_picnic
+    category: two_characters
+    characters: [dino, tira]
+    prompt: chr_dino and chr_tira sitting opposite each other at a picnic, both fully visible, children's book illustration
+    seed: 42153
+  - id: tira_dipo_bicycle
+    category: two_characters
+    characters: [tira, dipo]
+    prompt: chr_tira riding a bicycle while chr_dipo runs alongside, both fully visible, children's book illustration
+    seed: 42154
+  - id: three_friends
+    category: three_characters
+    characters: [dino, tira, dipo]
+    prompt: chr_dino, chr_tira, and chr_dipo standing together in a row, all three fully visible, children's book illustration
+    seed: 42155
+  - id: bridge_rescue
+    category: complex_composition
+    characters: [dino, tira, dipo]
+    prompt: chr_dino holds a rope from a wooden bridge while chr_tira helps chr_dipo climb from a stream below, children's book illustration
+    seed: 42156
