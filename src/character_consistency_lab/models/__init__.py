@@ -6,10 +6,15 @@ from .base import (
     GenerationResult,
     ModelBackend,
 )
+from .diffusers import DiffusersBackend, DiffusersBackendConfig, create_backend, load_backend_config
 
 __all__ = [
     "DryRunBackend",
     "GenerationRequest",
     "GenerationResult",
     "ModelBackend",
+    "DiffusersBackend",
+    "DiffusersBackendConfig",
+    "create_backend",
+    "load_backend_config",
 ]

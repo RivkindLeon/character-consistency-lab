@@ -14,6 +14,15 @@ dependencies = [
   "PyYAML>=6,<7",
 ]
 
+[project.optional-dependencies]
+inference = [
+  "diffusers>=0.35,<1",
+  "torch>=2.4,<3",
+  "transformers>=4.44,<6",
+  "accelerate>=1,<2",
+  "safetensors>=0.4,<1",
+]
+
 [project.scripts]
 character-lab = "character_consistency_lab.cli:main"
 ccl-manifest = "character_consistency_lab.cli:main"

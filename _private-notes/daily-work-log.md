@@ -1,5 +1,11 @@
 # Daily Work Log
 
+## 2026-09-06
+- Started Milestone 2 with a configurable optional Diffusers inference backend for FLUX and SDXL.
+- Added lazy heavyweight imports, an explicit inference dependency extra, a FLUX.2 Klein 4B model config, and a CPU-safe dry-run factory that does not import or download model code.
+- Mock-tested the real load/generate/save contract without requiring a GPU; baseline generation remains pending.
+- Verified with `PYTHONPATH=src ./venv/bin/python -m unittest discover -s tests -v` (36 tests passing) and `git diff --check`.
+
 ## 2026-09-05
 - Completed Milestone 1 with a versioned, typed benchmark schema and fixed 20-scene set.
 - Added explicit reusable prompts and seeds covering every benchmark category in the implementation brief, including multi-character and complex compositions.
