@@ -1,0 +1,4 @@
+backend: flux
+model_id: black-forest-labs/FLUX.2-klein-4B
+device: cuda
+dtype: bfloat16

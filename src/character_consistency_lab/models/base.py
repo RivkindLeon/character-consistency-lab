@@ -83,16 +83,23 @@ class ModelBackend(ABC):
 class DryRunBackend(ModelBackend):
     """CPU-safe backend that records intent without loading or writing a model."""
 
-    def __init__(self, model_id: str, model_revision: str | None = None) -> None:
+    def __init__(
+        self,
+        model_id: str,
+        model_revision: str | None = None,
+        *,
+        backend_name: str = "dry-run",
+    ) -> None:
         if not model_id.strip():
             raise ValueError("model_id must not be empty")
         self.model_id = model_id
         self.model_revision = model_revision
+        self.backend_name = backend_name
         self.is_loaded = False
 
     @property
     def name(self) -> str:
-        return "dry-run"
+        return self.backend_name
 
     def load(self) -> None:
         self.is_loaded = True

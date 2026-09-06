@@ -11,6 +11,7 @@ Utilities and experiments for preserving character identity consistency across A
 - dataset validation for metadata, missing or corrupt images, duplicate paths, and train/reference leakage
 - dataset statistics by character, split, and source-image resolution
 - a versioned 20-scene benchmark with fixed prompts and seeds
+- optional FLUX/SDXL Diffusers configuration with CPU-safe dry runs
 
 ## Why this helps
 
@@ -37,6 +38,12 @@ python -m venv venv
 ./venv/bin/character-lab dataset validate datasets/my_dataset
 ./venv/bin/character-lab dataset stats datasets/my_dataset
 ```
+
+Model configuration is separate from heavyweight execution. Loading
+`configs/models/flux2-klein-base-4b.yaml` and calling `create_backend(config,
+dry_run=True)` validates and records the intended model without importing
+PyTorch/Diffusers or downloading weights. Remote GPU hosts can install the real
+runtime with `pip install -e '.[inference]'` and opt into execution explicitly.
 
 A dataset directory contains `characters.yaml` and `manifest.jsonl`. Validation
 opens images without modifying them and uses content hashes to catch an image

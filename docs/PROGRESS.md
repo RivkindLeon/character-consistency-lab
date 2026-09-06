@@ -7,7 +7,7 @@ development job reads this file to decide what to work on next.
 sessions — each run starts with no history of previous runs. If it claims work
 that was not done, the next session builds on a lie.
 
-Last verified against the code: 2026-09-05.
+Last verified against the code: 2026-09-06.
 
 ---
 
@@ -81,9 +81,16 @@ malformed scenes, duplicate IDs, invalid seeds, and unknown fields.
 
 ## Milestone 2 — Baseline Inference
 
-**Status: not started.** No concrete model is ever loaded and nothing in this
-repository generates an image. The only runtime dependencies are Pydantic and
-PyYAML for configuration; no diffusion or tensor libraries are installed yet.
+**Status: in progress.** A configurable optional Diffusers backend now supports
+FLUX and SDXL pipeline classes. Heavyweight dependencies are isolated behind an
+optional install extra and lazy imports; model configuration and dry-run backend
+creation work on this CPU-only host without importing ML libraries or downloading
+weights. Real execution writes a requested image path and returns backend/model,
+device, and dtype metadata, but has not been run here because no GPU is available.
+
+Still unfinished: benchmark-run orchestration, complete experiment metadata from
+section 9, actual remote-GPU baseline generation, and a contact sheet. Baseline
+experiment results remain pending and must not be inferred from dry-run tests.
 
 ## Milestone 3 — LoRA Training
 
@@ -103,10 +110,9 @@ structural control, multi-character.
 
 ## Where the next session should start
 
-Milestones 0, 0.5, and 1 are complete. Start Milestone 2 with baseline inference:
-define a concrete, optional Diffusers backend that can be configured and dry-run
-on this CPU-only host without importing or downloading model weights. Preserve
-the backend-neutral interface and keep ordinary tests CPU-safe.
+Milestones 0, 0.5, and 1 are complete. Continue Milestone 2 with benchmark-run
+orchestration that turns the fixed scenes into generation requests and saves the
+full reproducibility metadata required by section 9. Keep dry runs CPU-safe.
 
 The dataset abstraction, manifest record schema, character metadata YAML
 loading, and filesystem/image validation from sections 6–7 are implemented.
