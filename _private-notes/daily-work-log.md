@@ -1,5 +1,11 @@
 # Daily Work Log
 
+## 2026-09-07
+- Added typed Milestone 2 benchmark-run orchestration and a versioned baseline experiment configuration with no character adapter.
+- Added `character-lab generate --experiment ... --dry-run`, which plans all 20 fixed scenes without importing model libraries or writing images and saves a config snapshot plus complete section 9 reproducibility metadata.
+- Baseline GPU generation and contact-sheet creation remain pending; no experiment results were fabricated.
+- Verified with `PYTHONPATH=src ./venv/bin/python -m unittest discover -s tests -v` (38 tests passing), the baseline CLI dry run (20 planned generations), and `git diff --check`.
+
 ## 2026-09-06
 - Started Milestone 2 with a configurable optional Diffusers inference backend for FLUX and SDXL.
 - Added lazy heavyweight imports, an explicit inference dependency extra, a FLUX.2 Klein 4B model config, and a CPU-safe dry-run factory that does not import or download model code.

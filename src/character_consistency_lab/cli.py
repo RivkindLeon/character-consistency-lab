@@ -12,6 +12,7 @@ from .data import (
     validate_dataset,
 )
 from .manifest import SpecValidationError, generate_manifest, load_spec, manifest_to_json, validate_spec
+from .experiments import run_experiment
 
 
 def build_manifest(args: argparse.Namespace) -> int:
@@ -55,6 +56,13 @@ def dataset_stats_command(args: argparse.Namespace) -> int:
     return 0
 
 
+def generate_command(args: argparse.Namespace) -> int:
+    metadata_path = run_experiment(args.experiment, dry_run=args.dry_run)
+    mode = "Dry run" if args.dry_run else "Generation"
+    print(f"{mode} complete: {metadata_path}")
+    return 0
+
+
 def make_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Character Consistency Lab tools")
     parser.set_defaults(func=None)
@@ -87,6 +95,15 @@ def make_parser() -> argparse.ArgumentParser:
     )
     dataset_stats.add_argument("root", help="Dataset directory.")
     dataset_stats.set_defaults(func=dataset_stats_command)
+
+    generate = subparsers.add_parser(
+        "generate", help="Generate a fixed benchmark and save reproducibility metadata."
+    )
+    generate.add_argument("--experiment", required=True, help="Experiment YAML configuration.")
+    generate.add_argument(
+        "--dry-run", action="store_true", help="Record all planned generations without loading a model."
+    )
+    generate.set_defaults(func=generate_command)
 
     return parser
 

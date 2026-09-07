@@ -7,7 +7,7 @@ development job reads this file to decide what to work on next.
 sessions — each run starts with no history of previous runs. If it claims work
 that was not done, the next session builds on a lie.
 
-Last verified against the code: 2026-09-06.
+Last verified against the code: 2026-09-07.
 
 ---
 
@@ -88,9 +88,16 @@ creation work on this CPU-only host without importing ML libraries or downloadin
 weights. Real execution writes a requested image path and returns backend/model,
 device, and dtype metadata, but has not been run here because no GPU is available.
 
-Still unfinished: benchmark-run orchestration, complete experiment metadata from
-section 9, actual remote-GPU baseline generation, and a contact sheet. Baseline
-experiment results remain pending and must not be inferred from dry-run tests.
+Benchmark-run orchestration is implemented and verified in CPU-safe dry-run
+mode. `character-lab generate --experiment ... --dry-run` expands all 20 fixed
+scenes into backend requests and writes a configuration snapshot plus complete
+per-generation metadata: model/revision, LoRA/weight, prompt/negative prompt,
+seed, dimensions, steps, guidance, adapter configuration, UTC timestamp, and Git
+commit SHA. The versioned baseline config contains no character adapter.
+
+Still unfinished: actual remote-GPU baseline generation and a contact sheet.
+Baseline experiment results remain pending and must not be inferred from dry-run
+tests.
 
 ## Milestone 3 — LoRA Training
 
@@ -110,16 +117,16 @@ structural control, multi-character.
 
 ## Where the next session should start
 
-Milestones 0, 0.5, and 1 are complete. Continue Milestone 2 with benchmark-run
-orchestration that turns the fixed scenes into generation requests and saves the
-full reproducibility metadata required by section 9. Keep dry runs CPU-safe.
+Milestones 0, 0.5, and 1 are complete. Continue Milestone 2 with contact-sheet
+generation that can be unit-tested using small local fixtures and used with the
+real baseline images once GPU generation is run.
 
 The dataset abstraction, manifest record schema, character metadata YAML
 loading, and filesystem/image validation from sections 6–7 are implemented.
 Dataset stats and the fixed benchmark scene set are complete.
 
-The model backend interface is complete and verified. Concrete FLUX/SDXL
-backends remain later implementation work under baseline inference.
+The model backend interface, optional FLUX/SDXL backend, and benchmark runner are
+complete and verified without downloading model weights.
 
 ## Hardware note
 
