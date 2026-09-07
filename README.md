@@ -12,6 +12,7 @@ Utilities and experiments for preserving character identity consistency across A
 - dataset statistics by character, split, and source-image resolution
 - a versioned 20-scene benchmark with fixed prompts and seeds
 - optional FLUX/SDXL Diffusers configuration with CPU-safe dry runs
+- benchmark-run orchestration with per-scene reproducibility metadata
 
 ## Why this helps
 
@@ -37,6 +38,9 @@ python -m venv venv
 
 ./venv/bin/character-lab dataset validate datasets/my_dataset
 ./venv/bin/character-lab dataset stats datasets/my_dataset
+./venv/bin/character-lab generate \
+  --experiment configs/experiments/baseline.yaml \
+  --dry-run
 ```
 
 Model configuration is separate from heavyweight execution. Loading
@@ -54,6 +58,13 @@ the explicit prompt and seed attached to every scene, so baseline, LoRA, and
 later conditioning experiments can render exactly the same inputs. The 20 scenes
 span single-character framing and pose changes through multi-character and
 complex compositions; add new scenes without changing existing IDs or seeds.
+
+The baseline experiment config writes to `runs/baseline/`. In dry-run mode the
+runner creates `config.yaml` and `metadata.json` but no image files and does not
+import Diffusers or PyTorch. Each planned scene records the model and revision,
+LoRA fields, prompt, negative prompt, seed, dimensions, steps, guidance, adapter
+configuration, timestamp, and current Git commit. Run the same command without
+`--dry-run` on a configured GPU host to generate the images.
 
 `validate-spec` fails fast on malformed or empty experiment fields, invalid render sizes or step counts, and empty sweep arrays, which helps catch bad daily experiment configs before a longer generation run starts.
 

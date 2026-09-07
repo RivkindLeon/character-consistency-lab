@@ -1,0 +1,11 @@
+name: baseline
+benchmark: benchmarks/scenes.yaml
+model: configs/models/flux2-klein-base-4b.yaml
+output_dir: runs/baseline
+generation:
+  width: 1024
+  height: 1024
+  steps: 28
+  guidance: 3.5
+  negative_prompt: null
+  adapter_configuration: {}
