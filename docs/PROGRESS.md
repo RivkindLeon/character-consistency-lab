@@ -7,7 +7,7 @@ development job reads this file to decide what to work on next.
 sessions — each run starts with no history of previous runs. If it claims work
 that was not done, the next session builds on a lie.
 
-Last verified against the code: 2026-09-07.
+Last verified against the code: 2026-09-08.
 
 ---
 
@@ -95,9 +95,13 @@ per-generation metadata: model/revision, LoRA/weight, prompt/negative prompt,
 seed, dimensions, steps, guidance, adapter configuration, UTC timestamp, and Git
 commit SHA. The versioned baseline config contains no character adapter.
 
-Still unfinished: actual remote-GPU baseline generation and a contact sheet.
-Baseline experiment results remain pending and must not be inferred from dry-run
-tests.
+Contact-sheet generation is implemented and verified with small local image
+fixtures. Every completed real benchmark run writes a deterministic labeled
+`comparison_grid.png` in benchmark order; dry runs correctly create no image
+artifact.
+
+Still unfinished: actual remote-GPU baseline generation. Baseline experiment
+results remain pending and must not be inferred from dry-run tests.
 
 ## Milestone 3 — LoRA Training
 
@@ -117,9 +121,9 @@ structural control, multi-character.
 
 ## Where the next session should start
 
-Milestones 0, 0.5, and 1 are complete. Continue Milestone 2 with contact-sheet
-generation that can be unit-tested using small local fixtures and used with the
-real baseline images once GPU generation is run.
+Milestones 0, 0.5, and 1 are complete. The remaining Milestone 2 work is actual
+baseline generation on a remote GPU using the existing fixed benchmark. Do not
+claim experiment results until that run has completed.
 
 The dataset abstraction, manifest record schema, character metadata YAML
 loading, and filesystem/image validation from sections 6–7 are implemented.

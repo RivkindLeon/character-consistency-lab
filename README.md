@@ -13,6 +13,7 @@ Utilities and experiments for preserving character identity consistency across A
 - a versioned 20-scene benchmark with fixed prompts and seeds
 - optional FLUX/SDXL Diffusers configuration with CPU-safe dry runs
 - benchmark-run orchestration with per-scene reproducibility metadata
+- deterministic labeled contact sheets for completed benchmark runs
 
 ## Why this helps
 
@@ -65,6 +66,9 @@ import Diffusers or PyTorch. Each planned scene records the model and revision,
 LoRA fields, prompt, negative prompt, seed, dimensions, steps, guidance, adapter
 configuration, timestamp, and current Git commit. Run the same command without
 `--dry-run` on a configured GPU host to generate the images.
+Completed runs also create `comparison_grid.png`, a labeled contact sheet in
+benchmark order. Dry runs do not create this image because they have no genuine
+generation artifacts to summarize.
 
 `validate-spec` fails fast on malformed or empty experiment fields, invalid render sizes or step counts, and empty sweep arrays, which helps catch bad daily experiment configs before a longer generation run starts.
 

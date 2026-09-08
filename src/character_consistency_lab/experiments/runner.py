@@ -14,6 +14,7 @@ import yaml
 from ..benchmarks import load_benchmark
 from ..config import ConfigurationError, StrictModel
 from ..models import GenerationRequest, create_backend, load_backend_config
+from ..reports import ContactSheetItem, create_contact_sheet
 
 
 class GenerationConfig(StrictModel):
@@ -118,6 +119,16 @@ def run_experiment(config_path: str | Path, *, dry_run: bool) -> Path:
                 }
             )
 
+    contact_sheet_path: Path | None = None
+    if not dry_run:
+        contact_sheet_path = create_contact_sheet(
+            [
+                ContactSheetItem(Path(record["image"]), record["scene_id"])
+                for record in records
+            ],
+            output_dir / "comparison_grid.png",
+        )
+
     snapshot_path = output_dir / "config.yaml"
     snapshot_path.write_text(config_path.read_text(encoding="utf-8"), encoding="utf-8")
     metadata = {
@@ -128,6 +139,7 @@ def run_experiment(config_path: str | Path, *, dry_run: bool) -> Path:
         "backend": backend.name,
         "dry_run": dry_run,
         "generation_count": len(records),
+        "contact_sheet": str(contact_sheet_path) if contact_sheet_path else None,
         "generations": records,
     }
     metadata_path = output_dir / "metadata.json"
