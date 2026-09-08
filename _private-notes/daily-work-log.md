@@ -1,5 +1,11 @@
 # Daily Work Log
 
+## 2026-09-08
+- Implemented deterministic labeled contact-sheet generation for completed benchmark runs, saved as `comparison_grid.png` in benchmark order.
+- Kept dry runs artifact-free and added the contact-sheet path to run metadata only when genuine images exist.
+- Added small local-image unit tests plus a mocked completed benchmark-run test; remote-GPU baseline generation and experiment results remain pending.
+- Verified with `PYTHONPATH=src ./venv/bin/python -m unittest discover -s tests -v` (42 tests passing), the baseline CLI dry run (20 planned generations), and `git diff --check`.
+
 ## 2026-09-07
 - Added typed Milestone 2 benchmark-run orchestration and a versioned baseline experiment configuration with no character adapter.
 - Added `character-lab generate --experiment ... --dry-run`, which plans all 20 fixed scenes without importing model libraries or writing images and saves a config snapshot plus complete section 9 reproducibility metadata.
