@@ -12,7 +12,7 @@ from .data import (
     validate_dataset,
 )
 from .manifest import SpecValidationError, generate_manifest, load_spec, manifest_to_json, validate_spec
-from .experiments import run_experiment
+from .experiments import check_experiment_runtime, run_experiment
 
 
 def build_manifest(args: argparse.Namespace) -> int:
@@ -57,6 +57,14 @@ def dataset_stats_command(args: argparse.Namespace) -> int:
 
 
 def generate_command(args: argparse.Namespace) -> int:
+    if args.check_runtime:
+        runtime = check_experiment_runtime(args.experiment)
+        print(
+            "Runtime ready: "
+            f"{runtime['backend']} on {runtime['device']} ({runtime['dtype']}), "
+            f"torch {runtime['torch']}, diffusers {runtime['diffusers']}"
+        )
+        return 0
     metadata_path = run_experiment(args.experiment, dry_run=args.dry_run)
     mode = "Dry run" if args.dry_run else "Generation"
     print(f"{mode} complete: {metadata_path}")
@@ -100,8 +108,14 @@ def make_parser() -> argparse.ArgumentParser:
         "generate", help="Generate a fixed benchmark and save reproducibility metadata."
     )
     generate.add_argument("--experiment", required=True, help="Experiment YAML configuration.")
-    generate.add_argument(
+    generate_mode = generate.add_mutually_exclusive_group()
+    generate_mode.add_argument(
         "--dry-run", action="store_true", help="Record all planned generations without loading a model."
+    )
+    generate_mode.add_argument(
+        "--check-runtime",
+        action="store_true",
+        help="Verify dependencies and accelerator support without downloading model weights.",
     )
     generate.set_defaults(func=generate_command)
 

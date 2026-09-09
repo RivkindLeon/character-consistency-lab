@@ -6,7 +6,13 @@ from .base import (
     GenerationResult,
     ModelBackend,
 )
-from .diffusers import DiffusersBackend, DiffusersBackendConfig, create_backend, load_backend_config
+from .diffusers import (
+    DiffusersBackend,
+    DiffusersBackendConfig,
+    check_backend_runtime,
+    create_backend,
+    load_backend_config,
+)
 
 __all__ = [
     "DryRunBackend",
@@ -15,6 +21,7 @@ __all__ = [
     "ModelBackend",
     "DiffusersBackend",
     "DiffusersBackendConfig",
+    "check_backend_runtime",
     "create_backend",
     "load_backend_config",
 ]

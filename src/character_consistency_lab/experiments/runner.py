@@ -13,7 +13,7 @@ import yaml
 
 from ..benchmarks import load_benchmark
 from ..config import ConfigurationError, StrictModel
-from ..models import GenerationRequest, create_backend, load_backend_config
+from ..models import GenerationRequest, check_backend_runtime, create_backend, load_backend_config
 from ..reports import ContactSheetItem, create_contact_sheet
 
 
@@ -53,6 +53,14 @@ def load_experiment_config(path: str | Path) -> ExperimentConfig:
         return ExperimentConfig.model_validate(data)
     except ValueError as exc:
         raise ConfigurationError(str(exc)) from exc
+
+
+def check_experiment_runtime(config_path: str | Path) -> dict[str, Any]:
+    """Check that a host can execute an experiment before loading model weights."""
+
+    config = load_experiment_config(config_path)
+    load_benchmark(config.benchmark)
+    return check_backend_runtime(load_backend_config(config.model))
 
 
 def _git_commit() -> str | None:

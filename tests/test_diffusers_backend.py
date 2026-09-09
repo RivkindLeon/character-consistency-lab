@@ -7,7 +7,12 @@ from pathlib import Path
 from unittest.mock import patch
 
 from character_consistency_lab.config import ConfigurationError
-from character_consistency_lab.models import GenerationRequest, create_backend, load_backend_config
+from character_consistency_lab.models import (
+    GenerationRequest,
+    check_backend_runtime,
+    create_backend,
+    load_backend_config,
+)
 
 
 class DiffusersBackendConfigTests(unittest.TestCase):
@@ -81,6 +86,37 @@ class DiffusersBackendConfigTests(unittest.TestCase):
             self.assertEqual(output.read_bytes(), b"fake-image")
             self.assertEqual(result.image_path, output)
             self.assertEqual(result.backend, "flux-diffusers")
+
+    def test_runtime_check_verifies_cuda_without_loading_model(self) -> None:
+        cuda = types.SimpleNamespace(is_available=lambda: True, is_bf16_supported=lambda: True)
+        modules = {
+            "torch": types.SimpleNamespace(__version__="2.8", cuda=cuda),
+            "diffusers": types.SimpleNamespace(__version__="0.35"),
+            "transformers": types.SimpleNamespace(),
+            "accelerate": types.SimpleNamespace(),
+            "safetensors": types.SimpleNamespace(),
+        }
+        config = load_backend_config("configs/models/flux2-klein-base-4b.yaml")
+        with patch(
+            "character_consistency_lab.models.diffusers.importlib.import_module",
+            side_effect=lambda name: modules[name],
+        ):
+            result = check_backend_runtime(config)
+        self.assertEqual(result["device"], "cuda")
+        self.assertEqual(result["torch"], "2.8")
+
+    def test_runtime_check_rejects_host_without_cuda(self) -> None:
+        cuda = types.SimpleNamespace(is_available=lambda: False, is_bf16_supported=lambda: False)
+        modules = {
+            name: types.SimpleNamespace(cuda=cuda) if name == "torch" else types.SimpleNamespace()
+            for name in ("torch", "diffusers", "transformers", "accelerate", "safetensors")
+        }
+        config = load_backend_config("configs/models/flux2-klein-base-4b.yaml")
+        with patch(
+            "character_consistency_lab.models.diffusers.importlib.import_module",
+            side_effect=lambda name: modules[name],
+        ), self.assertRaisesRegex(ConfigurationError, "CUDA is not available"):
+            check_backend_runtime(config)
 
 
 if __name__ == "__main__":

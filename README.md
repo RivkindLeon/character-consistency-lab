@@ -42,6 +42,11 @@ python -m venv venv
 ./venv/bin/character-lab generate \
   --experiment configs/experiments/baseline.yaml \
   --dry-run
+
+# On the remote GPU host, before any model download:
+./venv/bin/character-lab generate \
+  --experiment configs/experiments/baseline.yaml \
+  --check-runtime
 ```
 
 Model configuration is separate from heavyweight execution. Loading
@@ -49,6 +54,10 @@ Model configuration is separate from heavyweight execution. Loading
 dry_run=True)` validates and records the intended model without importing
 PyTorch/Diffusers or downloading weights. Remote GPU hosts can install the real
 runtime with `pip install -e '.[inference]'` and opt into execution explicitly.
+The `--check-runtime` mode validates the complete optional dependency set, CUDA
+availability, and bfloat16 support without loading or downloading model weights.
+After it succeeds, omit both `--check-runtime` and `--dry-run` to execute the
+baseline.
 
 A dataset directory contains `characters.yaml` and `manifest.jsonl`. Validation
 opens images without modifying them and uses content hashes to catch an image
