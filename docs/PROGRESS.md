@@ -7,7 +7,7 @@ development job reads this file to decide what to work on next.
 sessions — each run starts with no history of previous runs. If it claims work
 that was not done, the next session builds on a lie.
 
-Last verified against the code: 2026-09-08.
+Last verified against the code: 2026-09-09.
 
 ---
 
@@ -100,6 +100,12 @@ fixtures. Every completed real benchmark run writes a deterministic labeled
 `comparison_grid.png` in benchmark order; dry runs correctly create no image
 artifact.
 
+Remote runtime preflight is implemented and unit-tested. `character-lab
+generate --experiment ... --check-runtime` validates all optional inference
+dependencies, CUDA availability, and bfloat16 device support without loading or
+downloading model weights. This gives the remote operator a fail-fast check
+before starting the baseline.
+
 Still unfinished: actual remote-GPU baseline generation. Baseline experiment
 results remain pending and must not be inferred from dry-run tests.
 
@@ -131,6 +137,10 @@ Dataset stats and the fixed benchmark scene set are complete.
 
 The model backend interface, optional FLUX/SDXL backend, and benchmark runner are
 complete and verified without downloading model weights.
+
+On a remote GPU host, install `.[inference]`, run the runtime preflight, then run
+the baseline command without `--dry-run`. The next session must still obtain and
+verify those real outputs before moving to Milestone 3.
 
 ## Hardware note
 

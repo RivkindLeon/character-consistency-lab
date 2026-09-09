@@ -1,5 +1,11 @@
 # Daily Work Log
 
+## 2026-09-09
+- Added a fail-fast remote inference runtime preflight for the pending Milestone 2 baseline run.
+- `character-lab generate --experiment ... --check-runtime` now validates the benchmark/model configs, optional inference dependencies, CUDA availability, and bfloat16 support without downloading model weights.
+- Documented the remote execution handoff; actual GPU baseline generation and experiment results remain pending.
+- Verified with `PYTHONPATH=src ./venv/bin/python -m unittest discover -s tests -v` (44 tests passing), CLI help, the expected clean preflight failure on this CPU-only host, and `git diff --check`.
+
 ## 2026-09-08
 - Implemented deterministic labeled contact-sheet generation for completed benchmark runs, saved as `comparison_grid.png` in benchmark order.
 - Kept dry runs artifact-free and added the contact-sheet path to run metadata only when genuine images exist.

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import importlib
 from pathlib import Path
 from typing import Any, Literal
 
@@ -49,6 +50,42 @@ def create_backend(config: DiffusersBackendConfig, *, dry_run: bool) -> ModelBac
             backend_name=f"{config.backend}-diffusers-dry-run",
         )
     return DiffusersBackend(config)
+
+
+def check_backend_runtime(config: DiffusersBackendConfig) -> dict[str, Any]:
+    """Validate the real inference runtime without downloading model weights."""
+
+    missing: list[str] = []
+    modules: dict[str, Any] = {}
+    for name in ("diffusers", "torch", "transformers", "accelerate", "safetensors"):
+        try:
+            modules[name] = importlib.import_module(name)
+        except ImportError:
+            missing.append(name)
+    if missing:
+        raise ConfigurationError(
+            "real inference dependencies are missing: "
+            f"{', '.join(missing)}; install with: pip install -e '.[inference]'"
+        )
+
+    torch = modules["torch"]
+    if config.device.startswith("cuda") and not torch.cuda.is_available():
+        raise ConfigurationError(
+            f"model configuration requires device {config.device!r}, but CUDA is not available"
+        )
+    if config.device.startswith("cuda") and config.dtype == "bfloat16":
+        supported = getattr(torch.cuda, "is_bf16_supported", lambda: False)()
+        if not supported:
+            raise ConfigurationError("configured bfloat16 inference is not supported by this CUDA device")
+
+    return {
+        "backend": config.backend,
+        "model": config.model_id,
+        "device": config.device,
+        "dtype": config.dtype,
+        "torch": getattr(torch, "__version__", "unknown"),
+        "diffusers": getattr(modules["diffusers"], "__version__", "unknown"),
+    }
 
 
 class DiffusersBackend(ModelBackend):
