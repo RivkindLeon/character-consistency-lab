@@ -65,7 +65,7 @@ def generate_command(args: argparse.Namespace) -> int:
             f"torch {runtime['torch']}, diffusers {runtime['diffusers']}"
         )
         return 0
-    metadata_path = run_experiment(args.experiment, dry_run=args.dry_run)
+    metadata_path = run_experiment(args.experiment, dry_run=args.dry_run, resume=args.resume)
     mode = "Dry run" if args.dry_run else "Generation"
     print(f"{mode} complete: {metadata_path}")
     return 0
@@ -111,6 +111,11 @@ def make_parser() -> argparse.ArgumentParser:
     generate_mode = generate.add_mutually_exclusive_group()
     generate_mode.add_argument(
         "--dry-run", action="store_true", help="Record all planned generations without loading a model."
+    )
+    generate_mode.add_argument(
+        "--resume",
+        action="store_true",
+        help="Continue a real interrupted run using its checkpointed metadata and images.",
     )
     generate_mode.add_argument(
         "--check-runtime",
