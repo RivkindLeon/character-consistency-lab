@@ -75,7 +75,28 @@ def _git_commit() -> str | None:
         return None
 
 
-def run_experiment(config_path: str | Path, *, dry_run: bool) -> Path:
+def _write_metadata(path: Path, metadata: dict[str, Any]) -> None:
+    temporary = path.with_suffix(".json.tmp")
+    temporary.write_text(json.dumps(metadata, indent=2) + "\n", encoding="utf-8")
+    temporary.replace(path)
+
+
+def _resume_records(metadata_path: Path, config: ExperimentConfig) -> list[dict[str, Any]]:
+    if not metadata_path.is_file():
+        raise ConfigurationError(f"cannot resume: metadata does not exist: {metadata_path}")
+    try:
+        metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise ConfigurationError(f"cannot resume: invalid metadata: {exc}") from exc
+    if metadata.get("experiment") != config.name or metadata.get("dry_run") is not False:
+        raise ConfigurationError("cannot resume: existing metadata is for a different experiment or a dry run")
+    records = metadata.get("generations")
+    if not isinstance(records, list):
+        raise ConfigurationError("cannot resume: existing metadata has no generation records")
+    return records
+
+
+def run_experiment(config_path: str | Path, *, dry_run: bool, resume: bool = False) -> Path:
     """Execute every benchmark scene and write one self-contained metadata file."""
 
     config_path = Path(config_path)
@@ -85,10 +106,41 @@ def run_experiment(config_path: str | Path, *, dry_run: bool) -> Path:
     output_dir = Path(config.output_dir)
     images_dir = output_dir / "images"
     output_dir.mkdir(parents=True, exist_ok=True)
+    snapshot_path = output_dir / "config.yaml"
+    snapshot_path.write_text(config_path.read_text(encoding="utf-8"), encoding="utf-8")
 
     started_at = datetime.now(timezone.utc).isoformat()
-    records: list[dict[str, Any]] = []
+    metadata_path = output_dir / "metadata.json"
+    if resume and dry_run:
+        raise ConfigurationError("cannot resume a dry run")
+    records = _resume_records(metadata_path, config) if resume else []
+    resumed_scene_ids = {record.get("scene_id") for record in records}
+    if len(resumed_scene_ids) != len(records):
+        raise ConfigurationError("cannot resume: existing metadata contains duplicate or missing scene IDs")
+    expected_scene_ids = {scene.id for scene in benchmark.scenes}
+    if not resumed_scene_ids.issubset(expected_scene_ids):
+        raise ConfigurationError("cannot resume: existing metadata contains scenes outside this benchmark")
+    for record in records:
+        image = record.get("image")
+        if not isinstance(image, str) or not Path(image).is_file():
+            raise ConfigurationError(
+                f"cannot resume: completed scene {record.get('scene_id')!r} has no readable image"
+            )
+
     backend = create_backend(model_config, dry_run=dry_run)
+    metadata = {
+        "experiment": config.name,
+        "timestamp": started_at,
+        "git_commit_sha": _git_commit(),
+        "benchmark": {"path": str(config.benchmark), "version": benchmark.version},
+        "backend": backend.name,
+        "dry_run": dry_run,
+        "status": "running",
+        "generation_count": len(records),
+        "contact_sheet": None,
+        "generations": records,
+    }
+    _write_metadata(metadata_path, metadata)
     with backend:
         for scene in benchmark.scenes:
             request = GenerationRequest(
@@ -102,6 +154,26 @@ def run_experiment(config_path: str | Path, *, dry_run: bool) -> Path:
                 output_path=images_dir / f"{scene.id}.png",
                 adapter_config=config.generation.adapter_configuration,
             )
+            if scene.id in resumed_scene_ids:
+                prior = next(record for record in records if record["scene_id"] == scene.id)
+                expected = {
+                    "model": model_config.model_id,
+                    "model_revision": model_config.revision,
+                    "prompt": request.prompt,
+                    "negative_prompt": request.negative_prompt,
+                    "seed": request.seed,
+                    "width": request.width,
+                    "height": request.height,
+                    "steps": request.steps,
+                    "guidance": request.guidance,
+                    "adapter_configuration": dict(request.adapter_config),
+                    "planned_image": str(request.output_path),
+                }
+                if any(prior.get(key) != value for key, value in expected.items()):
+                    raise ConfigurationError(
+                        f"cannot resume: configuration changed for completed scene {scene.id!r}"
+                    )
+                continue
             result = backend.generate(request)
             records.append(
                 {
@@ -126,6 +198,8 @@ def run_experiment(config_path: str | Path, *, dry_run: bool) -> Path:
                     "dry_run": result.dry_run,
                 }
             )
+            metadata["generation_count"] = len(records)
+            _write_metadata(metadata_path, metadata)
 
     contact_sheet_path: Path | None = None
     if not dry_run:
@@ -137,19 +211,7 @@ def run_experiment(config_path: str | Path, *, dry_run: bool) -> Path:
             output_dir / "comparison_grid.png",
         )
 
-    snapshot_path = output_dir / "config.yaml"
-    snapshot_path.write_text(config_path.read_text(encoding="utf-8"), encoding="utf-8")
-    metadata = {
-        "experiment": config.name,
-        "timestamp": started_at,
-        "git_commit_sha": _git_commit(),
-        "benchmark": {"path": str(config.benchmark), "version": benchmark.version},
-        "backend": backend.name,
-        "dry_run": dry_run,
-        "generation_count": len(records),
-        "contact_sheet": str(contact_sheet_path) if contact_sheet_path else None,
-        "generations": records,
-    }
-    metadata_path = output_dir / "metadata.json"
-    metadata_path.write_text(json.dumps(metadata, indent=2) + "\n", encoding="utf-8")
+    metadata["status"] = "completed"
+    metadata["contact_sheet"] = str(contact_sheet_path) if contact_sheet_path else None
+    _write_metadata(metadata_path, metadata)
     return metadata_path

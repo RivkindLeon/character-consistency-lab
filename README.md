@@ -57,7 +57,9 @@ runtime with `pip install -e '.[inference]'` and opt into execution explicitly.
 The `--check-runtime` mode validates the complete optional dependency set, CUDA
 availability, and bfloat16 support without loading or downloading model weights.
 After it succeeds, omit both `--check-runtime` and `--dry-run` to execute the
-baseline.
+baseline. Real runs checkpoint `metadata.json` after every completed scene. If
+the remote process is interrupted, rerun the command with `--resume`; completed
+images are verified and skipped before the remaining benchmark scenes run.
 
 A dataset directory contains `characters.yaml` and `manifest.jsonl`. Validation
 opens images without modifying them and uses content hashes to catch an image

@@ -7,7 +7,7 @@ development job reads this file to decide what to work on next.
 sessions — each run starts with no history of previous runs. If it claims work
 that was not done, the next session builds on a lie.
 
-Last verified against the code: 2026-09-09.
+Last verified against the code: 2026-09-10.
 
 ---
 
@@ -106,6 +106,11 @@ dependencies, CUDA availability, and bfloat16 device support without loading or
 downloading model weights. This gives the remote operator a fail-fast check
 before starting the baseline.
 
+Real benchmark runs now checkpoint metadata atomically after each completed
+scene and support `--resume`. Resume mode verifies the prior metadata and image
+artifacts before skipping completed scenes, so an interrupted remote baseline
+does not discard provenance or regenerate successful outputs.
+
 Still unfinished: actual remote-GPU baseline generation. Baseline experiment
 results remain pending and must not be inferred from dry-run tests.
 
@@ -139,8 +144,9 @@ The model backend interface, optional FLUX/SDXL backend, and benchmark runner ar
 complete and verified without downloading model weights.
 
 On a remote GPU host, install `.[inference]`, run the runtime preflight, then run
-the baseline command without `--dry-run`. The next session must still obtain and
-verify those real outputs before moving to Milestone 3.
+the baseline command without `--dry-run` (or add `--resume` after an interrupted
+attempt). The next session must still obtain and verify those real outputs before
+moving to Milestone 3.
 
 ## Hardware note
 
