@@ -1,5 +1,11 @@
 # Daily Work Log
 
+## 2026-09-10
+- Added atomic per-scene metadata checkpointing and `character-lab generate --resume` for interrupted real benchmark runs.
+- Resume mode verifies existing image artifacts and rejects changed model, prompt, seed, render, adapter, or output settings before skipping completed scenes.
+- The config snapshot is now written before model loading; actual remote-GPU baseline generation and experiment results remain pending.
+- Verified with `PYTHONPATH=src ./venv/bin/python -m unittest discover -s tests -v` (46 tests passing), CLI help, the baseline dry run (20 planned generations), and `git diff --check`.
+
 ## 2026-09-09
 - Added a fail-fast remote inference runtime preflight for the pending Milestone 2 baseline run.
 - `character-lab generate --experiment ... --check-runtime` now validates the benchmark/model configs, optional inference dependencies, CUDA availability, and bfloat16 support without downloading model weights.
