@@ -7,7 +7,7 @@ development job reads this file to decide what to work on next.
 sessions — each run starts with no history of previous runs. If it claims work
 that was not done, the next session builds on a lie.
 
-Last verified against the code: 2026-09-10.
+Last verified against the code: 2026-10-01.
 
 ---
 
@@ -116,7 +116,15 @@ results remain pending and must not be inferred from dry-run tests.
 
 ## Milestone 3 — LoRA Training
 
-**Status: not started.**
+**Status: in progress.** Strict typed configuration and CPU-safe dry-run
+planning are implemented for the initial one-character LoRA. The versioned Dino
+configuration exposes every parameter required by section 11, rejects unknown
+or invalid fields, resolves dataset/output paths deterministically, and reports
+the effective batch size without importing ML libraries or loading weights.
+
+Still unfinished: the real Diffusers/PEFT training backend, runtime preflight,
+training metadata/loss history/sample persistence, and an actual remote-GPU
+training run. No LoRA weights or training results exist yet.
 
 ## Milestone 4 — Evaluation
 
@@ -134,7 +142,10 @@ structural control, multi-character.
 
 Milestones 0, 0.5, and 1 are complete. The remaining Milestone 2 work is actual
 baseline generation on a remote GPU using the existing fixed benchmark. Do not
-claim experiment results until that run has completed.
+claim experiment results until that run has completed. Because no GPU target is
+available and section 3 explicitly requires local dry-run development to
+continue, Milestone 3 implementation has begun without pretending the baseline
+experiment was executed. Experiment execution order remains baseline first.
 
 The dataset abstraction, manifest record schema, character metadata YAML
 loading, and filesystem/image validation from sections 6–7 are implemented.
@@ -145,8 +156,9 @@ complete and verified without downloading model weights.
 
 On a remote GPU host, install `.[inference]`, run the runtime preflight, then run
 the baseline command without `--dry-run` (or add `--resume` after an interrupted
-attempt). The next session must still obtain and verify those real outputs before
-moving to Milestone 3.
+attempt). If no GPU target is available next session, continue the earliest
+unfinished Milestone 3 implementation item: the real trainer boundary and
+remote runtime preflight. Do not run LoRA training before the baseline.
 
 ## Hardware note
 

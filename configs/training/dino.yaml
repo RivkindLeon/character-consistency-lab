@@ -1,0 +1,13 @@
+model: black-forest-labs/FLUX.2-klein-base-4B
+model_revision: null
+dataset: datasets/dino
+output_dir: runs/dino-lora-v1/training
+training_resolution: 1024
+rank: 16
+learning_rate: 0.0001
+steps: 1000
+batch_size: 1
+gradient_accumulation: 4
+mixed_precision: bf16
+seed: 42137
+trigger_token: chr_dino
