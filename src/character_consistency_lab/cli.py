@@ -13,6 +13,7 @@ from .data import (
 )
 from .manifest import SpecValidationError, generate_manifest, load_spec, manifest_to_json, validate_spec
 from .experiments import check_experiment_runtime, run_experiment
+from .training import create_training_plan, load_training_config
 
 
 def build_manifest(args: argparse.Namespace) -> int:
@@ -71,6 +72,20 @@ def generate_command(args: argparse.Namespace) -> int:
     return 0
 
 
+def train_command(args: argparse.Namespace) -> int:
+    config = load_training_config(args.config)
+    plan = create_training_plan(config, args.config)
+    print("LoRA training dry run (no model loaded)")
+    print(f"Model: {plan.model}")
+    print(f"Dataset: {plan.dataset}")
+    print(f"Output: {plan.output_dir}")
+    print(f"Steps: {plan.steps}")
+    print(f"Effective batch size: {plan.effective_batch_size}")
+    print(f"Seed: {plan.seed}")
+    print(f"Trigger token: {plan.trigger_token}")
+    return 0
+
+
 def make_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Character Consistency Lab tools")
     parser.set_defaults(func=None)
@@ -123,6 +138,18 @@ def make_parser() -> argparse.ArgumentParser:
         help="Verify dependencies and accelerator support without downloading model weights.",
     )
     generate.set_defaults(func=generate_command)
+
+    train = subparsers.add_parser(
+        "train", help="Validate and inspect a one-character LoRA training run."
+    )
+    train.add_argument("--config", required=True, help="LoRA training YAML configuration.")
+    train.add_argument(
+        "--dry-run",
+        action="store_true",
+        required=True,
+        help="Validate and print the plan without importing ML libraries or training.",
+    )
+    train.set_defaults(func=train_command)
 
     return parser
 

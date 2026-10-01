@@ -14,6 +14,7 @@ Utilities and experiments for preserving character identity consistency across A
 - optional FLUX/SDXL Diffusers configuration with CPU-safe dry runs
 - benchmark-run orchestration with per-scene reproducibility metadata
 - deterministic labeled contact sheets for completed benchmark runs
+- strict one-character LoRA training configuration with CPU-safe dry-run planning
 
 ## Why this helps
 
@@ -41,6 +42,9 @@ python -m venv venv
 ./venv/bin/character-lab dataset stats datasets/my_dataset
 ./venv/bin/character-lab generate \
   --experiment configs/experiments/baseline.yaml \
+  --dry-run
+./venv/bin/character-lab train \
+  --config configs/training/dino.yaml \
   --dry-run
 
 # On the remote GPU host, before any model download:
@@ -80,6 +84,14 @@ configuration, timestamp, and current Git commit. Run the same command without
 Completed runs also create `comparison_grid.png`, a labeled contact sheet in
 benchmark order. Dry runs do not create this image because they have no genuine
 generation artifacts to summarize.
+
+The initial LoRA configuration exposes the base model, resolution, rank,
+learning rate, steps, batch size, gradient accumulation, mixed precision,
+seed, and trigger token. The training dry run validates every field and prints
+resolved dataset/output paths plus the effective batch size without importing
+PyTorch or loading model weights. The real LoRA trainer is not implemented yet,
+and the example dataset path is an operator-supplied input rather than bundled
+training data.
 
 `validate-spec` fails fast on malformed or empty experiment fields, invalid render sizes or step counts, and empty sweep arrays, which helps catch bad daily experiment configs before a longer generation run starts.
 
