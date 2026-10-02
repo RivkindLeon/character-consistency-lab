@@ -7,7 +7,7 @@ development job reads this file to decide what to work on next.
 sessions — each run starts with no history of previous runs. If it claims work
 that was not done, the next session builds on a lie.
 
-Last verified against the code: 2026-10-01.
+Last verified against the code: 2026-10-02.
 
 ---
 
@@ -122,9 +122,16 @@ configuration exposes every parameter required by section 11, rejects unknown
 or invalid fields, resolves dataset/output paths deterministically, and reports
 the effective batch size without importing ML libraries or loading weights.
 
-Still unfinished: the real Diffusers/PEFT training backend, runtime preflight,
-training metadata/loss history/sample persistence, and an actual remote-GPU
-training run. No LoRA weights or training results exist yet.
+Remote training runtime preflight is implemented and unit-tested. `character-lab
+train --config ... --check-runtime` validates the source dataset, full optional
+Diffusers/PEFT training dependency stack, CUDA availability, and requested
+mixed-precision support without loading or downloading model weights.
+
+Still unfinished: the real Diffusers/PEFT training backend, training
+metadata/loss history/sample persistence, and an actual remote-GPU training
+run. No LoRA weights or training results exist yet. This checkout does not
+contain the operator-supplied `datasets/dino` source images, so the real
+preflight correctly remains pending on a populated remote host.
 
 ## Milestone 4 — Evaluation
 
@@ -158,7 +165,7 @@ On a remote GPU host, install `.[inference]`, run the runtime preflight, then ru
 the baseline command without `--dry-run` (or add `--resume` after an interrupted
 attempt). If no GPU target is available next session, continue the earliest
 unfinished Milestone 3 implementation item: the real trainer boundary and
-remote runtime preflight. Do not run LoRA training before the baseline.
+artifact persistence. Do not run LoRA training before the baseline.
 
 ## Hardware note
 

@@ -15,6 +15,7 @@ Utilities and experiments for preserving character identity consistency across A
 - benchmark-run orchestration with per-scene reproducibility metadata
 - deterministic labeled contact sheets for completed benchmark runs
 - strict one-character LoRA training configuration with CPU-safe dry-run planning
+- remote LoRA training runtime preflight without model downloads
 
 ## Why this helps
 
@@ -50,6 +51,10 @@ python -m venv venv
 # On the remote GPU host, before any model download:
 ./venv/bin/character-lab generate \
   --experiment configs/experiments/baseline.yaml \
+  --check-runtime
+./venv/bin/pip install -e '.[training]'
+./venv/bin/character-lab train \
+  --config configs/training/dino.yaml \
   --check-runtime
 ```
 
@@ -89,9 +94,11 @@ The initial LoRA configuration exposes the base model, resolution, rank,
 learning rate, steps, batch size, gradient accumulation, mixed precision,
 seed, and trigger token. The training dry run validates every field and prints
 resolved dataset/output paths plus the effective batch size without importing
-PyTorch or loading model weights. The real LoRA trainer is not implemented yet,
-and the example dataset path is an operator-supplied input rather than bundled
-training data.
+PyTorch or loading model weights. On a remote host, the training runtime
+preflight validates the source dataset, optional Diffusers/PEFT dependencies,
+CUDA availability, and the requested mixed precision without downloading model
+weights. The real LoRA trainer is not implemented yet, and the example dataset
+path is an operator-supplied input rather than bundled training data.
 
 `validate-spec` fails fast on malformed or empty experiment fields, invalid render sizes or step counts, and empty sweep arrays, which helps catch bad daily experiment configs before a longer generation run starts.
 
