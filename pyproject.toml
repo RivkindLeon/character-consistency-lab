@@ -22,6 +22,14 @@ inference = [
   "accelerate>=1,<2",
   "safetensors>=0.4,<1",
 ]
+training = [
+  "diffusers>=0.35,<1",
+  "torch>=2.4,<3",
+  "transformers>=4.44,<6",
+  "accelerate>=1,<2",
+  "peft>=0.13,<1",
+  "safetensors>=0.4,<1",
+]
 
 [project.scripts]
 character-lab = "character_consistency_lab.cli:main"

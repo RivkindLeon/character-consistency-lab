@@ -13,7 +13,7 @@ from .data import (
 )
 from .manifest import SpecValidationError, generate_manifest, load_spec, manifest_to_json, validate_spec
 from .experiments import check_experiment_runtime, run_experiment
-from .training import create_training_plan, load_training_config
+from .training import check_training_runtime, create_training_plan, load_training_config
 
 
 def build_manifest(args: argparse.Namespace) -> int:
@@ -75,6 +75,15 @@ def generate_command(args: argparse.Namespace) -> int:
 def train_command(args: argparse.Namespace) -> int:
     config = load_training_config(args.config)
     plan = create_training_plan(config, args.config)
+    if args.check_runtime:
+        runtime = check_training_runtime(plan, config)
+        print(
+            "Training runtime ready: "
+            f"{runtime['device']} ({runtime['mixed_precision']}), "
+            f"torch {runtime['torch']}, diffusers {runtime['diffusers']}, "
+            f"peft {runtime['peft']}; dataset {runtime['dataset_images']} image(s)"
+        )
+        return 0
     print("LoRA training dry run (no model loaded)")
     print(f"Model: {plan.model}")
     print(f"Dataset: {plan.dataset}")
@@ -143,11 +152,16 @@ def make_parser() -> argparse.ArgumentParser:
         "train", help="Validate and inspect a one-character LoRA training run."
     )
     train.add_argument("--config", required=True, help="LoRA training YAML configuration.")
-    train.add_argument(
+    train_mode = train.add_mutually_exclusive_group(required=True)
+    train_mode.add_argument(
         "--dry-run",
         action="store_true",
-        required=True,
         help="Validate and print the plan without importing ML libraries or training.",
+    )
+    train_mode.add_argument(
+        "--check-runtime",
+        action="store_true",
+        help="Verify the dataset, dependencies, CUDA, and precision without loading weights.",
     )
     train.set_defaults(func=train_command)
 

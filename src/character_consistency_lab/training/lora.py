@@ -3,8 +3,12 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import importlib
 from pathlib import Path
+from typing import Any
 
+from ..config import ConfigurationError
+from ..data import load_dataset, validate_dataset
 from .configs import LoRATrainingConfig
 
 
@@ -42,3 +46,44 @@ def create_training_plan(
         seed=config.seed,
         trigger_token=config.trigger_token,
     )
+
+
+def check_training_runtime(plan: TrainingPlan, config: LoRATrainingConfig) -> dict[str, Any]:
+    """Validate a remote training host without loading model weights."""
+
+    manifest = load_dataset(plan.dataset)
+    issues = validate_dataset(manifest)
+    if issues:
+        summary = "; ".join(f"[{issue.code}] {issue.message}" for issue in issues[:3])
+        suffix = f"; and {len(issues) - 3} more" if len(issues) > 3 else ""
+        raise ConfigurationError(f"training dataset is invalid: {summary}{suffix}")
+
+    modules: dict[str, Any] = {}
+    missing: list[str] = []
+    for name in ("accelerate", "diffusers", "peft", "safetensors", "torch", "transformers"):
+        try:
+            modules[name] = importlib.import_module(name)
+        except ImportError:
+            missing.append(name)
+    if missing:
+        raise ConfigurationError(
+            "real training dependencies are missing: "
+            f"{', '.join(missing)}; install with: pip install -e '.[training]'"
+        )
+
+    torch = modules["torch"]
+    if not torch.cuda.is_available():
+        raise ConfigurationError("LoRA training requires CUDA, but CUDA is not available")
+    if config.mixed_precision == "bf16":
+        supported = getattr(torch.cuda, "is_bf16_supported", lambda: False)()
+        if not supported:
+            raise ConfigurationError("configured bfloat16 training is not supported by this CUDA device")
+
+    return {
+        "device": "cuda",
+        "mixed_precision": config.mixed_precision,
+        "torch": getattr(torch, "__version__", "unknown"),
+        "diffusers": getattr(modules["diffusers"], "__version__", "unknown"),
+        "peft": getattr(modules["peft"], "__version__", "unknown"),
+        "dataset_images": len(manifest.records),
+    }
