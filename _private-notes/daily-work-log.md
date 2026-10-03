@@ -1,5 +1,143 @@
 # Daily Work Log
 
+## 2026-10-03
+- Added a backend-neutral Milestone 3 training runner and artifact contract.
+- The runner validates the dataset, snapshots the effective config, atomically checkpoints status and per-step loss history, records Git/model/dataset provenance, and verifies weights and sample artifacts before marking training complete.
+- Added CPU-safe fake-backend tests for successful and failed runs; no GPU training ran, and no LoRA weights or experiment results are claimed.
+- The real Diffusers/PEFT optimization backend, remote baseline generation, and remote LoRA training remain pending.
+
+## 2026-10-02
+- Added the Milestone 3 remote training runtime preflight and `character-lab train --config ... --check-runtime`.
+- The preflight validates the source dataset, Diffusers/PEFT/Accelerate training dependencies, CUDA availability, and requested mixed precision without downloading model weights.
+- Added the `training` optional dependency extra and mocked CPU-safe tests. The real trainer, persisted training artifacts, remote baseline, and all training results remain pending.
+- Verified 51 unit tests, the existing training dry run, the expected clean preflight failure because the operator-supplied `datasets/dino` is absent locally, CLI help, and `git diff --check` on branch `feat/m3-training-runtime-preflight-2026-10-02`.
+
+## 2026-10-01
+- Began Milestone 3 implementation after confirming the real Milestone 2 baseline remains blocked on unavailable GPU execution; baseline results are still pending and training must not run before it.
+- Added strict one-character LoRA training configuration plus `character-lab train --config ... --dry-run`, which validates every section 11 parameter and prints a resolved, CPU-safe plan without importing ML libraries or loading weights.
+- Added a versioned Dino configuration and unit coverage for valid plans, invalid values, unknown fields, and missing fields. The real trainer, GPU runtime preflight, persisted training artifacts, LoRA weights, and all experiment results remain unfinished.
+- Verified 49 unit tests, the Dino training dry run, CLI help, and `git diff --check` on branch `feat/m3-lora-training-dry-run-2026-10-01`.
+
+## 2026-09-30
+- Verified that `main` CI is green and there are no open pull requests.
+- Confirmed the earliest unfinished item remains actual Milestone 2 baseline generation; `runs/baseline/` contains only the dry-run `config.yaml` and `metadata.json`, with no generated images or contact sheet.
+- Confirmed this host still has no NVIDIA runtime/device, resolvable `gpu` SSH target, or cloud GPU credentials. A real baseline could not be run or verified, so Milestone 3 was not started.
+- No experiment results, repository commit, or pull request were created. A working remote GPU target is required to advance; further local runner refinement would not complete the milestone.
+
+## 2026-09-29
+- Verified that `main` CI is green and there are no open pull requests.
+- Confirmed the earliest unfinished item remains actual Milestone 2 baseline generation; `runs/baseline/` contains only the dry-run `config.yaml` and `metadata.json`, with no generated images or contact sheet.
+- Confirmed this host still has no NVIDIA runtime/device, resolvable `gpu` SSH target, or cloud GPU credentials. A real baseline could not be run or verified, so Milestone 3 was not started.
+- No experiment results, repository commit, or pull request were created. A working remote GPU target is required to advance; further local runner refinement would not complete the milestone.
+
+## 2026-09-28
+- Verified that `main` CI is green and there are no open pull requests.
+- Confirmed the earliest unfinished item remains actual Milestone 2 baseline generation; `runs/baseline/` contains only the dry-run `config.yaml` and `metadata.json`, with no generated images or contact sheet.
+- Confirmed this host still has no NVIDIA runtime/device, resolvable `gpu` SSH target, or cloud GPU credentials. A real baseline could not be run or verified, so Milestone 3 was not started.
+- No experiment results, repository commit, or pull request were created. A working remote GPU target is required to advance; further local runner refinement would not complete the milestone.
+
+## 2026-09-27
+- Verified that `main` CI is green and there are no open pull requests.
+- Confirmed the earliest unfinished item remains actual Milestone 2 baseline generation; `runs/baseline/` contains only the dry-run `config.yaml` and `metadata.json`, with no generated images or contact sheet.
+- Confirmed this host still has no NVIDIA runtime/device, resolvable `gpu` SSH target, or cloud GPU credentials. A real baseline could not be run or verified, so Milestone 3 was not started.
+- No experiment results, repository commit, or pull request were created. A working remote GPU target is required to advance; further local runner refinement would not complete the milestone.
+
+## 2026-09-26
+- Verified that `main` CI is green and there are no open pull requests.
+- Confirmed the earliest unfinished item remains actual Milestone 2 baseline generation; `runs/baseline/` contains only the dry-run `config.yaml` and `metadata.json`, with no generated images or contact sheet.
+- Confirmed this host still has no NVIDIA device/runtime, resolvable `gpu` SSH target, or cloud GPU credentials. A real baseline could not be run or verified, so Milestone 3 was not started.
+- No experiment results, repository commit, or pull request were created. A working remote GPU target is required to advance; further local runner refinement would not complete the milestone.
+
+## 2026-09-25
+- Verified that `main` CI is green and there are no open pull requests.
+- Confirmed the earliest unfinished item remains actual Milestone 2 baseline generation; `runs/baseline/` contains only the dry-run `config.yaml` and `metadata.json`, with no generated images or contact sheet.
+- Confirmed this host still has no NVIDIA runtime/device, configured SSH GPU target, or cloud GPU credentials. A real baseline could not be run or verified, so Milestone 3 was not started.
+- No experiment results, repository commit, or pull request were created. A working remote GPU target is required to advance; further local runner refinement would not complete the milestone.
+
+## 2026-09-24
+- Verified that `main` CI is green and there are no open pull requests.
+- Confirmed the earliest unfinished item remains actual Milestone 2 baseline generation; `runs/baseline/metadata.json` is a completed 20-scene dry run, with no generated images or contact sheet.
+- Confirmed this host still has no NVIDIA runtime/device, cloud GPU credentials, or resolvable `gpu` SSH target. A real baseline could not be run or verified, so Milestone 3 was not started.
+- No experiment results, repository commit, or pull request were created. A working remote GPU target is required to advance; further local runner refinement would not complete the milestone.
+
+## 2026-09-23
+- Verified that `main` CI is green and there are no open pull requests.
+- Confirmed the earliest unfinished item remains actual Milestone 2 baseline generation; `runs/baseline/` still contains only `config.yaml` and dry-run `metadata.json`, with no generated images or contact sheet.
+- Confirmed this host still has no NVIDIA runtime, cloud GPU credentials, or resolvable `gpu` SSH target. A real baseline could not be run or verified, so Milestone 3 was not started.
+- No experiment results, repository commit, or pull request were created. A working remote GPU target is required to advance; further local runner refinement would not complete the milestone.
+
+## 2026-09-22
+- Verified that `main` CI is green and there are no open pull requests.
+- Confirmed the earliest unfinished item remains actual Milestone 2 baseline generation; `runs/baseline/metadata.json` is a completed dry run, with no generated images or contact sheet.
+- Confirmed this host still has no NVIDIA runtime or device, cloud GPU credentials, or resolvable `gpu` SSH target. A real baseline could not be run or verified, so Milestone 3 was not started.
+- No experiment results, repository commit, or pull request were created. A working remote GPU target is required to advance; another local runner refinement would not complete the milestone.
+
+## 2026-09-21
+- Verified that `main` CI is green and there are no open pull requests.
+- Confirmed the earliest unfinished item remains actual Milestone 2 baseline generation; `runs/baseline/` still contains only `config.yaml` and dry-run `metadata.json`, with no generated images or contact sheet.
+- Confirmed this host still has no NVIDIA runtime, cloud GPU credentials, or resolvable `gpu` SSH target. A real baseline could not be run or verified, so Milestone 3 was not started.
+- No experiment results, repository commit, or pull request were created. A working remote GPU target is required to advance; further local runner refinement would not satisfy the milestone.
+
+## 2026-09-20
+- Verified that `main` CI is green and there are no open pull requests.
+- Confirmed the earliest unfinished item remains actual Milestone 2 baseline generation; `runs/baseline/` still contains only `config.yaml` and dry-run `metadata.json`, with no generated images or contact sheet.
+- Confirmed this host still has no NVIDIA device/runtime, cloud GPU credentials, or resolvable `gpu` SSH target. A real baseline could not be run or verified, so Milestone 3 was not started.
+- No experiment results, repository commit, or pull request were created. A working remote GPU target is required to advance; creating an empty or unrelated change would not satisfy the milestone.
+
+## 2026-09-19
+- Verified that `main` CI is green and there are no open pull requests.
+- Confirmed the earliest unfinished item remains actual Milestone 2 baseline generation; `runs/baseline/` still contains only `config.yaml` and dry-run `metadata.json`, with no generated images or contact sheet.
+- Confirmed this host still has no NVIDIA runtime, cloud GPU credentials, configured SSH GPU target, or resolvable `gpu` host. A real baseline could not be run or verified, so Milestone 3 was not started.
+- No experiment results, repository commit, or pull request were created. A working remote GPU target is required to advance; further local prompt-manifest or baseline-runner polishing would not satisfy the milestone.
+
+## 2026-09-18
+- Verified that `main` CI is green and there are no open pull requests.
+- Confirmed the earliest unfinished item remains actual Milestone 2 baseline generation; `runs/baseline/` still contains only `config.yaml` and dry-run `metadata.json`, with no generated images or contact sheet.
+- Confirmed this host still has no local NVIDIA device, cloud GPU credentials, or reachable configured `gpu` SSH target. A real baseline could not be run or verified, so Milestone 3 was not started.
+- No experiment results, repository commit, or pull request were created. A working remote GPU target is required to advance.
+
+## 2026-09-17
+- Verified that `main` CI is green and there are no open pull requests.
+- Confirmed the earliest unfinished item remains actual Milestone 2 baseline generation; `runs/baseline/` still contains only `config.yaml` and dry-run `metadata.json`, with no generated images or contact sheet.
+- Confirmed this host still has no NVIDIA runtime or cloud GPU credentials, and the configured `gpu` SSH hostname does not resolve. A real baseline could not be run or verified, so Milestone 3 was not started.
+- No experiment results, repository commit, or pull request were created. A working remote GPU target is required to advance.
+
+## 2026-09-16
+- Verified that `main` CI is green and there are no open pull requests.
+- Confirmed the earliest unfinished item remains actual Milestone 2 baseline generation; the baseline run contains only `config.yaml` and dry-run `metadata.json`, with no generated images or contact sheet.
+- Confirmed this host still has no NVIDIA runtime or cloud GPU credentials, and the configured `gpu` SSH hostname does not resolve. A real baseline could not be run or verified, so Milestone 3 was not started.
+- No experiment results, repository commit, or pull request were created. A working remote GPU target is required to advance.
+
+## 2026-09-15
+- Verified that `main` CI is green and there are no open pull requests.
+- Confirmed the earliest unfinished item remains actual Milestone 2 baseline generation; `runs/baseline/metadata.json` is a completed dry run and the run contains no generated images or contact sheet.
+- Confirmed this host has no NVIDIA runtime, configured SSH GPU target, or cloud GPU credentials. A real baseline could not be run or verified, and Milestone 3 was not started because the brief requires completing milestones in order.
+- No experiment results, repository commit, or pull request were created. A configured remote GPU target is required to advance.
+
+## 2026-09-14
+- Verified that `main` CI is green and there are no open pull requests.
+- Confirmed the earliest unfinished item remains actual Milestone 2 baseline generation; `runs/baseline/metadata.json` is explicitly a completed dry run and there are no generated images or contact sheet.
+- Confirmed this host has no NVIDIA runtime, configured SSH GPU target, or cloud GPU credentials. A real baseline could not be run or verified, and Milestone 3 was not started because the brief requires completing milestones in order.
+- No experiment results, repository commit, or pull request were created. A configured remote GPU target is required to advance.
+
+## 2026-09-13
+- Verified that `main` CI is green and there are no open pull requests.
+- Confirmed the earliest unfinished item remains actual Milestone 2 baseline generation; `runs/baseline/metadata.json` is explicitly a completed dry run and contains no generated images or contact sheet.
+- Confirmed this host has no NVIDIA runtime or configured cloud GPU credentials. The only candidate SSH target, `gpu`, does not resolve, so no remote GPU is available for the required real run.
+- No experiment results, repository commit, or pull request were created. Milestone 3 was not started because the brief requires completing the baseline first; a working remote GPU target is required to advance.
+
+## 2026-09-12
+- Verified that `main` CI is green and there are no open pull requests.
+- Confirmed the earliest unfinished item remains actual Milestone 2 baseline generation; the repository already has the CPU-safe dry-run, runtime preflight, reproducibility metadata, resumable generation, and contact-sheet path.
+- Confirmed this host has no NVIDIA GPU, SSH remote target, or configured cloud GPU credentials. A real baseline could not be run or verified, and Milestone 3 was not started because the brief requires completing milestones in order.
+- No experiment results, repository commit, or pull request were created. A configured remote GPU target is required to advance the next item.
+
+## 2026-09-11
+- Verified that `main` CI is green and there are no open pull requests.
+- Confirmed the earliest unfinished item remains the real Milestone 2 baseline generation: `runs/baseline/metadata.json` is a completed dry run with no image artifacts or contact sheet.
+- This host has no NVIDIA GPU and no configured remote GPU target or cloud GPU credentials, so the real baseline could not be executed or verified. Milestone 3 was not started because that would skip the required baseline.
+- No repository change, commit, or pull request was created; experiment results remain pending.
+
 ## 2026-09-10
 - Added atomic per-scene metadata checkpointing and `character-lab generate --resume` for interrupted real benchmark runs.
 - Resume mode verifies existing image artifacts and rejects changed model, prompt, seed, render, adapter, or output settings before skipping completed scenes.

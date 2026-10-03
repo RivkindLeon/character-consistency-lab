@@ -16,6 +16,8 @@ Utilities and experiments for preserving character identity consistency across A
 - deterministic labeled contact sheets for completed benchmark runs
 - strict one-character LoRA training configuration with CPU-safe dry-run planning
 - remote LoRA training runtime preflight without model downloads
+- a backend-neutral training runner that checkpoints configuration, loss history,
+  status, model provenance, weights, and sample-image metadata
 
 ## Why this helps
 
@@ -97,8 +99,10 @@ resolved dataset/output paths plus the effective batch size without importing
 PyTorch or loading model weights. On a remote host, the training runtime
 preflight validates the source dataset, optional Diffusers/PEFT dependencies,
 CUDA availability, and the requested mixed precision without downloading model
-weights. The real LoRA trainer is not implemented yet, and the example dataset
-path is an operator-supplied input rather than bundled training data.
+weights. The training runner and artifact contract are implemented and tested
+with a CPU-safe fake backend. The actual Diffusers/PEFT optimization backend is
+not implemented yet, and the example dataset path is an operator-supplied input
+rather than bundled training data. No training results or weights are claimed.
 
 `validate-spec` fails fast on malformed or empty experiment fields, invalid render sizes or step counts, and empty sweep arrays, which helps catch bad daily experiment configs before a longer generation run starts.
 

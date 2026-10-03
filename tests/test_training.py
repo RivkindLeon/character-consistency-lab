@@ -10,9 +10,12 @@ from PIL import Image
 
 from character_consistency_lab.config import ConfigurationError
 from character_consistency_lab.training import (
+    TrainingResult,
+    TrainingStep,
     check_training_runtime,
     create_training_plan,
     load_training_config,
+    run_training,
 )
 
 
@@ -117,6 +120,76 @@ class TrainingConfigTests(unittest.TestCase):
                 side_effect=ImportError,
             ), self.assertRaisesRegex(ConfigurationError, "install.*training"):
                 check_training_runtime(plan, config)
+
+    def test_runner_persists_complete_training_artifacts(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            self._write_dataset(root)
+            config_path = root / "configs" / "training" / "dino.yaml"
+            config_path.parent.mkdir(parents=True)
+            config_path.write_text(
+                VALID_CONFIG.replace("steps: 1000", "steps: 2"), encoding="utf-8"
+            )
+            config = load_training_config(config_path)
+            plan = create_training_plan(config, config_path)
+
+            class FakeBackend:
+                def train(self, plan, config, on_step):
+                    history = (TrainingStep(1, 0.75), TrainingStep(2, 0.5))
+                    for item in history:
+                        on_step(item)
+                    weights = plan.output_dir / "dino.safetensors"
+                    weights.write_bytes(b"fake weights")
+                    sample = plan.output_dir / "sample.png"
+                    Image.new("RGB", (16, 16)).save(sample)
+                    return TrainingResult(
+                        weights_path=weights,
+                        loss_history=history,
+                        sample_paths=(sample,),
+                        backend_metadata={"name": "fake"},
+                    )
+
+            metadata_path = run_training(plan, config, FakeBackend())
+
+            import json
+
+            metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+            losses = json.loads(
+                (plan.output_dir / "loss_history.json").read_text(encoding="utf-8")
+            )
+            self.assertEqual(metadata["status"], "completed")
+            self.assertEqual(metadata["dataset_images"], 1)
+            self.assertEqual(metadata["backend"], {"name": "fake"})
+            self.assertEqual(losses, [{"step": 1, "loss": 0.75}, {"step": 2, "loss": 0.5}])
+            self.assertTrue((plan.output_dir / "config.yaml").is_file())
+
+    def test_runner_checkpoints_failure_without_claiming_results(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            self._write_dataset(root)
+            config_path = root / "configs" / "training" / "dino.yaml"
+            config_path.parent.mkdir(parents=True)
+            config_path.write_text(
+                VALID_CONFIG.replace("steps: 1000", "steps: 2"), encoding="utf-8"
+            )
+            config = load_training_config(config_path)
+            plan = create_training_plan(config, config_path)
+
+            class FailingBackend:
+                def train(self, plan, config, on_step):
+                    on_step(TrainingStep(1, 0.75))
+                    raise RuntimeError("GPU disconnected")
+
+            with self.assertRaisesRegex(RuntimeError, "GPU disconnected"):
+                run_training(plan, config, FailingBackend())
+
+            import json
+
+            metadata = json.loads(
+                (plan.output_dir / "metadata.json").read_text(encoding="utf-8")
+            )
+            self.assertEqual(metadata["status"], "failed")
+            self.assertIsNone(metadata["weights"])
 
 
 if __name__ == "__main__":
