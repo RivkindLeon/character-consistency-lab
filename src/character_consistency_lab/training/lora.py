@@ -7,6 +7,8 @@ from datetime import datetime, timezone
 import importlib
 import json
 from pathlib import Path
+import shlex
+import shutil
 import subprocess
 from typing import Any, Callable, Protocol
 
@@ -56,6 +58,97 @@ class TrainingBackend(Protocol):
         config: LoRATrainingConfig,
         on_step: Callable[[TrainingStep], None],
     ) -> TrainingResult: ...
+
+
+def prepare_diffusers_dataset(plan: TrainingPlan) -> Path:
+    """Create an ImageFolder snapshot containing only training records.
+
+    Diffusers' DreamBooth scripts can load this directory with ``--dataset_name``
+    and retain each manifest caption through ``--caption_column text``.
+    """
+
+    manifest = load_dataset(plan.dataset)
+    issues = validate_dataset(manifest)
+    if issues:
+        summary = "; ".join(f"[{issue.code}] {issue.message}" for issue in issues[:3])
+        raise ConfigurationError(f"training dataset is invalid: {summary}")
+
+    records = [record for record in manifest.records if record.split.value == "train"]
+    if not records:
+        raise ConfigurationError("training dataset has no records in the train split")
+
+    destination = plan.output_dir / "input_dataset"
+    if destination.exists():
+        raise ConfigurationError(
+            f"prepared training dataset already exists: {destination}; "
+            "move or remove it explicitly before rebuilding"
+        )
+    destination.mkdir(parents=True)
+    metadata_lines: list[str] = []
+    for index, record in enumerate(records, start=1):
+        source = manifest.image_path(record)
+        filename = f"{index:04d}{source.suffix.lower()}"
+        shutil.copy2(source, destination / filename)
+        metadata_lines.append(json.dumps({"file_name": filename, "text": record.caption}))
+    (destination / "metadata.jsonl").write_text(
+        "\n".join(metadata_lines) + "\n", encoding="utf-8"
+    )
+    return destination
+
+
+def build_diffusers_training_command(
+    plan: TrainingPlan,
+    config: LoRATrainingConfig,
+    trainer_script: str | Path,
+) -> tuple[str, ...]:
+    """Build the official Accelerate/Diffusers FLUX.2 Klein LoRA command."""
+
+    command = [
+        "accelerate",
+        "launch",
+        str(Path(trainer_script)),
+        "--pretrained_model_name_or_path",
+        config.model,
+        "--dataset_name",
+        str(plan.output_dir / "input_dataset"),
+        "--image_column",
+        "image",
+        "--caption_column",
+        "text",
+        "--instance_prompt",
+        config.trigger_token,
+        "--output_dir",
+        str(plan.output_dir),
+        "--resolution",
+        str(config.training_resolution),
+        "--rank",
+        str(config.rank),
+        "--learning_rate",
+        str(config.learning_rate),
+        "--max_train_steps",
+        str(config.steps),
+        "--train_batch_size",
+        str(config.batch_size),
+        "--gradient_accumulation_steps",
+        str(config.gradient_accumulation),
+        "--mixed_precision",
+        config.mixed_precision,
+        "--seed",
+        str(config.seed),
+        "--lr_scheduler",
+        "constant",
+        "--lr_warmup_steps",
+        "0",
+    ]
+    if config.model_revision is not None:
+        command.extend(("--revision", config.model_revision))
+    return tuple(command)
+
+
+def format_training_command(command: tuple[str, ...]) -> str:
+    """Render an argv tuple as a shell-safe command for a remote operator."""
+
+    return shlex.join(command)
 
 
 def create_training_plan(

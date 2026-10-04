@@ -6,8 +6,11 @@ from .lora import (
     TrainingPlan,
     TrainingResult,
     TrainingStep,
+    build_diffusers_training_command,
     check_training_runtime,
     create_training_plan,
+    format_training_command,
+    prepare_diffusers_dataset,
     run_training,
 )
 
@@ -17,8 +20,11 @@ __all__ = [
     "TrainingBackend",
     "TrainingResult",
     "TrainingStep",
+    "build_diffusers_training_command",
     "check_training_runtime",
     "create_training_plan",
+    "format_training_command",
     "load_training_config",
+    "prepare_diffusers_dataset",
     "run_training",
 ]

@@ -1,5 +1,13 @@
 # Daily Work Log
 
+## 2026-10-04
+- Confirmed `main` CI was green before starting (run 37145139342).
+- Added `character-lab train --prepare-data`, which validates the source dataset and creates a non-destructive ImageFolder snapshot containing only train-split images and their manifest captions.
+- Added `character-lab train --emit-command --trainer-script ...`, mapping every typed training parameter to a shell-safe Accelerate invocation of Diffusers' official `train_dreambooth_lora_flux2_klein.py` example.
+- Added Hugging Face Datasets to the optional training dependencies so the official trainer can load the captioned local ImageFolder.
+- Verified all 55 unit tests pass and manually verified command emission. GPU execution remains pending because this host has neither the dataset nor a GPU; no training results are claimed.
+- Next: connect the external trainer process to the artifact runner and checkpoint its observed losses/artifacts.
+
 ## 2026-10-03
 - Added a backend-neutral Milestone 3 training runner and artifact contract.
 - The runner validates the dataset, snapshots the effective config, atomically checkpoints status and per-step loss history, records Git/model/dataset provenance, and verifies weights and sample artifacts before marking training complete.

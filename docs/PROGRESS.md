@@ -7,7 +7,7 @@ development job reads this file to decide what to work on next.
 sessions — each run starts with no history of previous runs. If it claims work
 that was not done, the next session builds on a lie.
 
-Last verified against the code: 2026-10-03.
+Last verified against the code: 2026-10-04.
 
 ---
 
@@ -19,7 +19,7 @@ Last verified against the code: 2026-10-03.
 |---|---|
 | Python package | done — `src/character_consistency_lab/` |
 | CLI | done — `ccl-manifest` (brief specifies `character-lab`) |
-| Tests | done — 23 unit tests, all passing |
+| Tests | done — 55 unit tests, all passing |
 | Configuration system | done — strict typed YAML loading with Pydantic, including range and unknown-field validation |
 | Dataset abstraction | done — typed character, record, split, and manifest contracts with JSONL loading |
 | Model backend interface | done — backend-neutral generation request/result contracts and a CPU-safe dry-run backend |
@@ -135,10 +135,20 @@ and verifies reported weights and sample files before marking a run complete.
 Metadata includes the model/revision, dataset and image count, trigger token,
 timestamps, Git commit, backend details, weights, and samples.
 
-Still unfinished: the real Diffusers/PEFT optimization backend and an actual
-remote-GPU training run. No LoRA weights or training results exist yet. This
-checkout does not contain the operator-supplied `datasets/dino` source images,
-so the real preflight correctly remains pending on a populated remote host.
+Remote Diffusers input preparation and command emission are implemented and
+unit-tested. `--prepare-data` snapshots only train-split images into an
+ImageFolder dataset and preserves manifest captions in `metadata.jsonl`; it
+never modifies source images or silently overwrites an existing snapshot.
+`--emit-command` maps the typed configuration to a shell-safe `accelerate
+launch` invocation of Diffusers' official FLUX.2 Klein DreamBooth LoRA example.
+The training optional dependencies now include Hugging Face Datasets for
+loading the captioned local ImageFolder.
+
+Still unfinished: executing the Diffusers trainer through the artifact runner,
+parsing/checkpointing its losses, and an actual remote-GPU training run. No LoRA
+weights or training results exist yet. This checkout does not contain the
+operator-supplied `datasets/dino` source images, so data preparation and the real
+preflight correctly remain pending on a populated remote host.
 
 ## Milestone 4 — Evaluation
 
@@ -171,9 +181,9 @@ complete and verified without downloading model weights.
 On a remote GPU host, install `.[inference]`, run the runtime preflight, then run
 the baseline command without `--dry-run` (or add `--resume` after an interrupted
 attempt). If no GPU target is available next session, continue the earliest
-unfinished Milestone 3 implementation item: the real Diffusers/PEFT optimization
-backend behind the existing training runner boundary. Do not run LoRA training
-before the baseline.
+unfinished Milestone 3 implementation item: connect the emitted official
+Diffusers command to the existing training runner boundary and checkpoint its
+observed losses/artifacts. Do not run LoRA training before the baseline.
 
 ## Hardware note
 
