@@ -13,7 +13,14 @@ from .data import (
 )
 from .manifest import SpecValidationError, generate_manifest, load_spec, manifest_to_json, validate_spec
 from .experiments import check_experiment_runtime, run_experiment
-from .training import check_training_runtime, create_training_plan, load_training_config
+from .training import (
+    build_diffusers_training_command,
+    check_training_runtime,
+    create_training_plan,
+    format_training_command,
+    load_training_config,
+    prepare_diffusers_dataset,
+)
 
 
 def build_manifest(args: argparse.Namespace) -> int:
@@ -83,6 +90,14 @@ def train_command(args: argparse.Namespace) -> int:
             f"torch {runtime['torch']}, diffusers {runtime['diffusers']}, "
             f"peft {runtime['peft']}; dataset {runtime['dataset_images']} image(s)"
         )
+        return 0
+    if args.prepare_data:
+        path = prepare_diffusers_dataset(plan)
+        print(f"Prepared {path}")
+        return 0
+    if args.emit_command:
+        command = build_diffusers_training_command(plan, config, args.trainer_script)
+        print(format_training_command(command))
         return 0
     print("LoRA training dry run (no model loaded)")
     print(f"Model: {plan.model}")
@@ -157,6 +172,21 @@ def make_parser() -> argparse.ArgumentParser:
         "--dry-run",
         action="store_true",
         help="Validate and print the plan without importing ML libraries or training.",
+    )
+    train_mode.add_argument(
+        "--prepare-data",
+        action="store_true",
+        help="Snapshot train-split images and captions for the Diffusers trainer.",
+    )
+    train_mode.add_argument(
+        "--emit-command",
+        action="store_true",
+        help="Print a shell-safe Accelerate command for the official FLUX.2 Klein trainer.",
+    )
+    train.add_argument(
+        "--trainer-script",
+        default="train_dreambooth_lora_flux2_klein.py",
+        help="Path to Diffusers' train_dreambooth_lora_flux2_klein.py example.",
     )
     train_mode.add_argument(
         "--check-runtime",

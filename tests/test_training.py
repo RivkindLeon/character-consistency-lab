@@ -12,9 +12,12 @@ from character_consistency_lab.config import ConfigurationError
 from character_consistency_lab.training import (
     TrainingResult,
     TrainingStep,
+    build_diffusers_training_command,
     check_training_runtime,
     create_training_plan,
+    format_training_command,
     load_training_config,
+    prepare_diffusers_dataset,
     run_training,
 )
 
@@ -120,6 +123,57 @@ class TrainingConfigTests(unittest.TestCase):
                 side_effect=ImportError,
             ), self.assertRaisesRegex(ConfigurationError, "install.*training"):
                 check_training_runtime(plan, config)
+
+    def test_prepares_train_only_imagefolder_with_manifest_captions(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            self._write_dataset(root)
+            dataset = root / "datasets" / "dino"
+            Image.new("RGB", (64, 64), color="blue").save(
+                dataset / "images" / "reference.png"
+            )
+            with (dataset / "manifest.jsonl").open("a", encoding="utf-8") as handle:
+                handle.write(
+                    '{"image":"images/reference.png","character":"dino",'
+                    '"caption":"reference only","split":"reference"}\n'
+                )
+            config_path = root / "configs" / "training" / "dino.yaml"
+            config_path.parent.mkdir(parents=True)
+            config_path.write_text(VALID_CONFIG, encoding="utf-8")
+            config = load_training_config(config_path)
+            plan = create_training_plan(config, config_path)
+
+            prepared = prepare_diffusers_dataset(plan)
+
+            self.assertEqual(
+                sorted(path.name for path in prepared.iterdir()),
+                ["0001.png", "metadata.jsonl"],
+            )
+            self.assertEqual(
+                (prepared / "metadata.jsonl").read_text(encoding="utf-8"),
+                '{"file_name": "0001.png", "text": "chr_dino portrait"}\n',
+            )
+            with self.assertRaisesRegex(ConfigurationError, "already exists"):
+                prepare_diffusers_dataset(plan)
+
+    def test_builds_shell_safe_official_diffusers_command(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            config_path = root / "configs" / "training" / "dino.yaml"
+            config_path.parent.mkdir(parents=True)
+            config_path.write_text(VALID_CONFIG, encoding="utf-8")
+            config = load_training_config(config_path)
+            plan = create_training_plan(config, config_path)
+
+            command = build_diffusers_training_command(
+                plan, config, root / "scripts with spaces" / "trainer.py"
+            )
+
+            self.assertEqual(command[:2], ("accelerate", "launch"))
+            self.assertIn("--caption_column", command)
+            self.assertEqual(command[command.index("--rank") + 1], "16")
+            self.assertEqual(command[command.index("--max_train_steps") + 1], "1000")
+            self.assertIn("'", format_training_command(command))
 
     def test_runner_persists_complete_training_artifacts(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

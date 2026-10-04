@@ -18,6 +18,8 @@ Utilities and experiments for preserving character identity consistency across A
 - remote LoRA training runtime preflight without model downloads
 - a backend-neutral training runner that checkpoints configuration, loss history,
   status, model provenance, weights, and sample-image metadata
+- a reproducible train-split ImageFolder snapshot and shell-safe command for
+  Diffusers' official FLUX.2 Klein LoRA trainer
 
 ## Why this helps
 
@@ -58,6 +60,13 @@ python -m venv venv
 ./venv/bin/character-lab train \
   --config configs/training/dino.yaml \
   --check-runtime
+./venv/bin/character-lab train \
+  --config configs/training/dino.yaml \
+  --prepare-data
+./venv/bin/character-lab train \
+  --config configs/training/dino.yaml \
+  --emit-command \
+  --trainer-script /path/to/diffusers/examples/dreambooth/train_dreambooth_lora_flux2_klein.py
 ```
 
 Model configuration is separate from heavyweight execution. Loading
@@ -99,10 +108,14 @@ resolved dataset/output paths plus the effective batch size without importing
 PyTorch or loading model weights. On a remote host, the training runtime
 preflight validates the source dataset, optional Diffusers/PEFT dependencies,
 CUDA availability, and the requested mixed precision without downloading model
-weights. The training runner and artifact contract are implemented and tested
-with a CPU-safe fake backend. The actual Diffusers/PEFT optimization backend is
-not implemented yet, and the example dataset path is an operator-supplied input
-rather than bundled training data. No training results or weights are claimed.
+weights. `--prepare-data` creates an explicit ImageFolder snapshot containing
+only train-split images plus `metadata.jsonl`, preserving each manifest caption
+without touching source images. `--emit-command` maps the typed configuration to
+the official Diffusers FLUX.2 Klein DreamBooth LoRA script. The training runner
+and artifact contract are implemented and tested with a CPU-safe fake backend.
+Executing that external trainer through the artifact runner is not implemented
+yet, and the example dataset path is an operator-supplied input rather than a
+bundled training dataset. No training results or weights are claimed.
 
 `validate-spec` fails fast on malformed or empty experiment fields, invalid render sizes or step counts, and empty sweep arrays, which helps catch bad daily experiment configs before a longer generation run starts.
 
