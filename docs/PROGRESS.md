@@ -7,7 +7,7 @@ development job reads this file to decide what to work on next.
 sessions — each run starts with no history of previous runs. If it claims work
 that was not done, the next session builds on a lie.
 
-Last verified against the code: 2026-10-04.
+Last verified against the code: 2026-10-05.
 
 ---
 
@@ -144,11 +144,17 @@ launch` invocation of Diffusers' official FLUX.2 Klein DreamBooth LoRA example.
 The training optional dependencies now include Hugging Face Datasets for
 loading the captioned local ImageFolder.
 
-Still unfinished: executing the Diffusers trainer through the artifact runner,
-parsing/checkpointing its losses, and an actual remote-GPU training run. No LoRA
-weights or training results exist yet. This checkout does not contain the
-operator-supplied `datasets/dino` source images, so data preparation and the real
-preflight correctly remain pending on a populated remote host.
+The emitted Diffusers trainer is now connected to the artifact runner through
+`character-lab train --execute`. Its progress stream is parsed into atomic loss
+checkpoints, the complete subprocess output is retained in `trainer.log`, and a
+successful process must produce the expected LoRA weights and any reported
+sample images before the run can be marked complete. The subprocess boundary is
+unit-tested without a GPU.
+
+Still unfinished: an actual remote-GPU training run. No LoRA weights or training
+results exist yet. This checkout does not contain the operator-supplied
+`datasets/dino` source images, so data preparation and the real preflight
+correctly remain pending on a populated remote host.
 
 ## Milestone 4 — Evaluation
 
@@ -180,10 +186,10 @@ complete and verified without downloading model weights.
 
 On a remote GPU host, install `.[inference]`, run the runtime preflight, then run
 the baseline command without `--dry-run` (or add `--resume` after an interrupted
-attempt). If no GPU target is available next session, continue the earliest
-unfinished Milestone 3 implementation item: connect the emitted official
-Diffusers command to the existing training runner boundary and checkpoint its
-observed losses/artifacts. Do not run LoRA training before the baseline.
+attempt). The remaining Milestone 3 item is remote execution, after the baseline
+has run: prepare the populated dataset, pass runtime preflight, and invoke
+`train --execute` with the official Diffusers trainer. Do not run LoRA training
+before the baseline.
 
 ## Hardware note
 

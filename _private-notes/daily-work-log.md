@@ -1,5 +1,11 @@
 # Daily Work Log
 
+## 2026-10-05
+- Confirmed `main` was synchronized, no pull requests were open, and the latest recorded `main` CI was green before starting.
+- Added `character-lab train --execute`, connecting the official Diffusers FLUX.2 Klein trainer command to the existing artifact runner.
+- Added streamed parsing of Diffusers/tqdm step-loss progress, atomic loss checkpointing, a durable `trainer.log`, subprocess failure diagnostics, and verification of the expected LoRA weights and optional sample images.
+- Verified the subprocess boundary with CPU-safe mocked success and failure tests. Real baseline generation and LoRA training remain pending because this host has no GPU or operator dataset; no experiment results are claimed.
+
 ## 2026-10-04
 - Confirmed `main` CI was green before starting (run 37145139342).
 - Added `character-lab train --prepare-data`, which validates the source dataset and creates a non-destructive ImageFolder snapshot containing only train-split images and their manifest captions.

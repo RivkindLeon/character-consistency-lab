@@ -2,6 +2,7 @@
 
 from .configs import LoRATrainingConfig, load_training_config
 from .lora import (
+    DiffusersTrainingBackend,
     TrainingBackend,
     TrainingPlan,
     TrainingResult,
@@ -16,6 +17,7 @@ from .lora import (
 
 __all__ = [
     "LoRATrainingConfig",
+    "DiffusersTrainingBackend",
     "TrainingPlan",
     "TrainingBackend",
     "TrainingResult",

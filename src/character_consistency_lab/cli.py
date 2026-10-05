@@ -14,12 +14,14 @@ from .data import (
 from .manifest import SpecValidationError, generate_manifest, load_spec, manifest_to_json, validate_spec
 from .experiments import check_experiment_runtime, run_experiment
 from .training import (
+    DiffusersTrainingBackend,
     build_diffusers_training_command,
     check_training_runtime,
     create_training_plan,
     format_training_command,
     load_training_config,
     prepare_diffusers_dataset,
+    run_training,
 )
 
 
@@ -98,6 +100,10 @@ def train_command(args: argparse.Namespace) -> int:
     if args.emit_command:
         command = build_diffusers_training_command(plan, config, args.trainer_script)
         print(format_training_command(command))
+        return 0
+    if args.execute:
+        metadata = run_training(plan, config, DiffusersTrainingBackend(args.trainer_script))
+        print(f"Training complete: {metadata}")
         return 0
     print("LoRA training dry run (no model loaded)")
     print(f"Model: {plan.model}")
@@ -187,6 +193,11 @@ def make_parser() -> argparse.ArgumentParser:
         "--trainer-script",
         default="train_dreambooth_lora_flux2_klein.py",
         help="Path to Diffusers' train_dreambooth_lora_flux2_klein.py example.",
+    )
+    train_mode.add_argument(
+        "--execute",
+        action="store_true",
+        help="Run the official trainer and checkpoint observed losses and artifacts.",
     )
     train_mode.add_argument(
         "--check-runtime",
