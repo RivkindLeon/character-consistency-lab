@@ -7,6 +7,7 @@ from datetime import datetime, timezone
 import importlib
 import json
 from pathlib import Path
+import re
 import shlex
 import shutil
 import subprocess
@@ -58,6 +59,108 @@ class TrainingBackend(Protocol):
         config: LoRATrainingConfig,
         on_step: Callable[[TrainingStep], None],
     ) -> TrainingResult: ...
+
+
+class DiffusersTrainingBackend:
+    """Execute the official Diffusers trainer and translate its progress to artifacts."""
+
+    _PROGRESS = re.compile(
+        r"(?P<step>\d+)/(?P<total>\d+).*?loss[=:]\s*(?P<loss>[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?)"
+    )
+
+    def __init__(self, trainer_script: str | Path) -> None:
+        self.trainer_script = Path(trainer_script)
+
+    def train(
+        self,
+        plan: TrainingPlan,
+        config: LoRATrainingConfig,
+        on_step: Callable[[TrainingStep], None],
+    ) -> TrainingResult:
+        prepared = plan.output_dir / "input_dataset"
+        if not (prepared / "metadata.jsonl").is_file():
+            raise ConfigurationError(
+                f"prepared training dataset is missing: {prepared}; run --prepare-data first"
+            )
+        if not self.trainer_script.is_file():
+            raise ConfigurationError(f"Diffusers trainer script does not exist: {self.trainer_script}")
+
+        command = build_diffusers_training_command(plan, config, self.trainer_script)
+        log_path = plan.output_dir / "trainer.log"
+        observed_steps: list[TrainingStep] = []
+        tail: list[str] = []
+        with log_path.open("w", encoding="utf-8") as log:
+            try:
+                process = subprocess.Popen(
+                    command,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.STDOUT,
+                    text=True,
+                    bufsize=1,
+                )
+            except OSError as exc:
+                raise ConfigurationError(f"could not start Diffusers trainer: {exc}") from exc
+            assert process.stdout is not None
+            line = ""
+            while True:
+                character = process.stdout.read(1)
+                if character == "":
+                    if line:
+                        self._record_line(line, config.steps, observed_steps, on_step)
+                        log.write(line)
+                    break
+                log.write(character)
+                log.flush()
+                if character in "\r\n":
+                    if line:
+                        tail.append(line)
+                        tail[:] = tail[-20:]
+                        self._record_line(line, config.steps, observed_steps, on_step)
+                    line = ""
+                else:
+                    line += character
+            return_code = process.wait()
+
+        if return_code != 0:
+            detail = " | ".join(tail[-3:])
+            suffix = f": {detail}" if detail else ""
+            raise ConfigurationError(
+                f"Diffusers trainer exited with status {return_code}{suffix}; see {log_path}"
+            )
+
+        weights = plan.output_dir / "pytorch_lora_weights.safetensors"
+        samples = tuple(sorted(plan.output_dir.glob("image_*.png")))
+        return TrainingResult(
+            weights_path=weights,
+            loss_history=tuple(observed_steps),
+            sample_paths=samples,
+            backend_metadata={
+                "name": "diffusers",
+                "trainer_script": str(self.trainer_script.resolve()),
+                "command": list(command),
+                "log": str(log_path.resolve()),
+                "return_code": return_code,
+            },
+        )
+
+    @classmethod
+    def _record_line(
+        cls,
+        line: str,
+        expected_steps: int,
+        observed_steps: list[TrainingStep],
+        on_step: Callable[[TrainingStep], None],
+    ) -> None:
+        match = cls._PROGRESS.search(line)
+        if match is None:
+            return
+        step = int(match.group("step"))
+        total = int(match.group("total"))
+        if total != expected_steps or (observed_steps and step <= observed_steps[-1].step):
+            return
+        item = TrainingStep(step=step, loss=float(match.group("loss")))
+        on_step(item)
+        observed_steps.append(item)
 
 
 def prepare_diffusers_dataset(plan: TrainingPlan) -> Path:

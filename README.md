@@ -20,6 +20,8 @@ Utilities and experiments for preserving character identity consistency across A
   status, model provenance, weights, and sample-image metadata
 - a reproducible train-split ImageFolder snapshot and shell-safe command for
   Diffusers' official FLUX.2 Klein LoRA trainer
+- an external Diffusers training backend that checkpoints observed losses and
+  verifies weights and sample artifacts through the training runner
 
 ## Why this helps
 
@@ -67,6 +69,10 @@ python -m venv venv
   --config configs/training/dino.yaml \
   --emit-command \
   --trainer-script /path/to/diffusers/examples/dreambooth/train_dreambooth_lora_flux2_klein.py
+./venv/bin/character-lab train \
+  --config configs/training/dino.yaml \
+  --execute \
+  --trainer-script /path/to/diffusers/examples/dreambooth/train_dreambooth_lora_flux2_klein.py
 ```
 
 Model configuration is separate from heavyweight execution. Loading
@@ -111,11 +117,13 @@ CUDA availability, and the requested mixed precision without downloading model
 weights. `--prepare-data` creates an explicit ImageFolder snapshot containing
 only train-split images plus `metadata.jsonl`, preserving each manifest caption
 without touching source images. `--emit-command` maps the typed configuration to
-the official Diffusers FLUX.2 Klein DreamBooth LoRA script. The training runner
-and artifact contract are implemented and tested with a CPU-safe fake backend.
-Executing that external trainer through the artifact runner is not implemented
-yet, and the example dataset path is an operator-supplied input rather than a
-bundled training dataset. No training results or weights are claimed.
+the official Diffusers FLUX.2 Klein DreamBooth LoRA script. After preparation
+and runtime preflight, `--execute` runs that script through the artifact runner,
+streams its progress into atomic loss checkpoints, preserves `trainer.log`, and
+verifies the resulting `pytorch_lora_weights.safetensors` plus any generated
+sample images before marking the run complete. The example dataset path is an
+operator-supplied input rather than a bundled training dataset. No training
+results or weights are claimed.
 
 `validate-spec` fails fast on malformed or empty experiment fields, invalid render sizes or step counts, and empty sweep arrays, which helps catch bad daily experiment configs before a longer generation run starts.
 

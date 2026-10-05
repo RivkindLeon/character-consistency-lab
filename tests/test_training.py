@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 from pathlib import Path
+import io
+import json
 import tempfile
 import unittest
 from unittest.mock import patch
@@ -10,6 +12,7 @@ from PIL import Image
 
 from character_consistency_lab.config import ConfigurationError
 from character_consistency_lab.training import (
+    DiffusersTrainingBackend,
     TrainingResult,
     TrainingStep,
     build_diffusers_training_command,
@@ -205,8 +208,6 @@ class TrainingConfigTests(unittest.TestCase):
 
             metadata_path = run_training(plan, config, FakeBackend())
 
-            import json
-
             metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
             losses = json.loads(
                 (plan.output_dir / "loss_history.json").read_text(encoding="utf-8")
@@ -237,13 +238,87 @@ class TrainingConfigTests(unittest.TestCase):
             with self.assertRaisesRegex(RuntimeError, "GPU disconnected"):
                 run_training(plan, config, FailingBackend())
 
-            import json
-
             metadata = json.loads(
                 (plan.output_dir / "metadata.json").read_text(encoding="utf-8")
             )
             self.assertEqual(metadata["status"], "failed")
             self.assertIsNone(metadata["weights"])
+
+    def test_diffusers_backend_runs_through_artifact_runner(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            self._write_dataset(root)
+            config_path = root / "configs" / "training" / "dino.yaml"
+            config_path.parent.mkdir(parents=True)
+            config_path.write_text(
+                VALID_CONFIG.replace("steps: 1000", "steps: 2"), encoding="utf-8"
+            )
+            trainer = root / "trainer.py"
+            trainer.write_text("# fake trainer", encoding="utf-8")
+            config = load_training_config(config_path)
+            plan = create_training_plan(config, config_path)
+            (plan.output_dir / "input_dataset").mkdir(parents=True)
+            (plan.output_dir / "input_dataset" / "metadata.jsonl").write_text(
+                "{}\n", encoding="utf-8"
+            )
+            weights = plan.output_dir / "pytorch_lora_weights.safetensors"
+            weights.write_bytes(b"fake weights")
+
+            class FakeProcess:
+                stdout = io.StringIO(
+                    "Steps:  50%| 1/2 [00:01, loss=7.5e-1, lr=0.1]\r"
+                    "Steps: 100%| 2/2 [00:02, loss=0.5, lr=0.1]\n"
+                )
+
+                def wait(self):
+                    return 0
+
+            backend = DiffusersTrainingBackend(trainer)
+            with patch(
+                "character_consistency_lab.training.lora.subprocess.Popen",
+                return_value=FakeProcess(),
+            ), patch(
+                "character_consistency_lab.training.lora._git_commit",
+                return_value="abc123",
+            ):
+                metadata_path = run_training(plan, config, backend)
+
+            metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+            losses = json.loads(
+                (plan.output_dir / "loss_history.json").read_text(encoding="utf-8")
+            )
+            self.assertEqual(metadata["status"], "completed")
+            self.assertEqual(metadata["weights"], str(weights.resolve()))
+            self.assertIn("accelerate", metadata["backend"]["command"])
+            self.assertEqual(losses, [{"step": 1, "loss": 0.75}, {"step": 2, "loss": 0.5}])
+            self.assertIn("1/2", (plan.output_dir / "trainer.log").read_text())
+
+    def test_diffusers_backend_reports_process_failure(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            config_path = root / "configs" / "training" / "dino.yaml"
+            config_path.parent.mkdir(parents=True)
+            config_path.write_text(VALID_CONFIG, encoding="utf-8")
+            trainer = root / "trainer.py"
+            trainer.write_text("# fake trainer", encoding="utf-8")
+            config = load_training_config(config_path)
+            plan = create_training_plan(config, config_path)
+            (plan.output_dir / "input_dataset").mkdir(parents=True)
+            (plan.output_dir / "input_dataset" / "metadata.jsonl").write_text(
+                "{}\n", encoding="utf-8"
+            )
+
+            class FailedProcess:
+                stdout = io.StringIO("CUDA out of memory\n")
+
+                def wait(self):
+                    return 1
+
+            with patch(
+                "character_consistency_lab.training.lora.subprocess.Popen",
+                return_value=FailedProcess(),
+            ), self.assertRaisesRegex(ConfigurationError, "CUDA out of memory"):
+                DiffusersTrainingBackend(trainer).train(plan, config, lambda step: None)
 
 
 if __name__ == "__main__":
